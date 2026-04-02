@@ -10,8 +10,8 @@
 /* ── THEME VARIABLES ─────────────────────────────────── */
 :root {
   /* Widgemo navbar color */
-  --nav-bg: #2d3057;
-  --nav-border: #3d4070;
+  --nav-bg: #2b2d3a;
+  --nav-border: #3c3e50;
   --nav-text: #fff;
   --nav-sub: rgba(255,255,255,.6);
   --nav-div: rgba(255,255,255,.2);
@@ -19,7 +19,7 @@
   --nav-tab-border: rgba(255,255,255,.2);
   --nav-tab-text: rgba(255,255,255,.8);
   --nav-tab-active-bg: #fff;
-  --nav-tab-active-text: #2d3057;
+  --nav-tab-active-text: #2b2d3a;
   --nav-btn-border: rgba(255,255,255,.35);
   --nav-btn-text: rgba(255,255,255,.85);
 
@@ -34,7 +34,7 @@
   --accent2: #3cbfbf;
   --warn: #f5a623;
   --danger: #c0392b;
-  --text: #2c1a0e;
+  --text: #3d2b1a;
   --text2: #7a5c3a;
   --text3: #b08050;
   --input-bg: #fdf3e3;
@@ -76,7 +76,7 @@ html.dark {
   --accent2: #45d0d0;
   --warn: #f5a623;
   --danger: #e05555;
-  --text: #e8e2ff;
+  --text: #ccc8e8;
   --text2: #a8a0cc;
   --text3: #7870aa;
   --input-bg: #1c1a2e;
@@ -139,6 +139,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .mode-tab svg{width:13px;height:13px}
 .banner-actions{margin-left:auto;display:flex;gap:8px;align-items:center}
+.nav-btn{display:inline-flex;align-items:center;gap:6px;font-family:'Nunito',sans-serif;
+  font-size:.8rem;font-weight:700;padding:5px 14px;border-radius:7px;border:1px solid var(--nav-btn-border);
+  background:transparent;color:var(--nav-btn-text);cursor:pointer;transition:all .2s;white-space:nowrap}
+.nav-btn svg{width:13px;height:13px;flex-shrink:0}
+.nav-btn:hover{background:rgba(255,255,255,.15);color:#fff}
 
 /* theme toggle button */
 .theme-btn{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;
@@ -188,6 +193,8 @@ input[type=datetime-local]{color-scheme:var(--datetime-scheme)}
 .btn-g{background:transparent;color:var(--nav-btn-text);border:1px solid var(--nav-btn-border);
   font-size:.76rem;padding:5px 11px}
 .btn-g:hover{background:rgba(255,255,255,.15);color:#fff}
+.btn-outline{background:transparent;color:var(--text2);border:1px solid var(--border);font-size:.76rem;padding:5px 11px}
+.btn-outline:hover{background:var(--surface3);color:var(--text);border-color:var(--accent)}
 .btn-d{background:rgba(192,57,43,.1);color:var(--danger);border:1px solid rgba(192,57,43,.2);
   font-size:.73rem;padding:4px 9px}
 .btn-d:hover{background:rgba(192,57,43,.2)}
@@ -237,7 +244,7 @@ input[type=datetime-local]{color-scheme:var(--datetime-scheme)}
   cursor:pointer;white-space:nowrap}
 .tchk input{accent-color:var(--accent);cursor:pointer}
 .tdiv{width:1px;height:18px;background:var(--border);margin:0 2px}
-.cvport{flex:1;overflow:auto;padding:20px}
+.cvport{flex:1;overflow:auto;padding:20px;background:var(--chart-bg);transition:background .25s}
 .sbanner{font-family:'Nunito',sans-serif;font-size:1.1rem;font-weight:800;color:var(--text2);
   text-align:center;padding:0 0 10px;letter-spacing:-.01em}
 .sbanner .ssub{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--text3);
@@ -295,11 +302,18 @@ input[type=datetime-local]{color-scheme:var(--datetime-scheme)}
     </button>
   </div>
   <div class="banner-actions">
-    <button class="btn btn-g btn-sm" onclick="importClick()">
+    <button class="nav-btn" onclick="importClick()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
         <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
       </svg>Import
+    </button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="nav-btn" onclick="exportData()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>Export
     </button>
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle dark/light mode">
       <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
@@ -309,13 +323,6 @@ input[type=datetime-local]{color-scheme:var(--datetime-scheme)}
       <svg id="theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
       </svg>
-    </button>
-    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
-    <button class="btn btn-s btn-sm" onclick="exportData()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-        <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-      </svg>Export
     </button>
   </div>
 </header>
@@ -350,7 +357,7 @@ input[type=datetime-local]{color-scheme:var(--datetime-scheme)}
       <div class="sep"></div>
       <div class="sh">
         <span class="st">Interactions</span>
-        <button class="btn btn-g btn-sm" onclick="addIField()">
+        <button class="btn btn-outline btn-sm" onclick="addIField()">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>Add
@@ -383,6 +390,14 @@ input[type=datetime-local]{color-scheme:var(--datetime-scheme)}
         <textarea id="scenario-desc" rows="3" placeholder="Optional notes…" style="resize:vertical"></textarea>
       </div>
       <button class="btn btn-p" onclick="saveScenario()">Save Scenario Info</button>
+      <div class="sep"></div>
+      <div class="sh"><span class="st">System Lane Order</span></div>
+      <span class="hint">Assign a number to each system to control lane order in diagrams. Lower = first. Leave blank for alphabetical.</span>
+      <div id="sys-order-list" style="display:flex;flex-direction:column;gap:6px;margin-top:2px"></div>
+      <button class="btn btn-outline" onclick="refreshSysOrderUI()" style="align-self:flex-start;margin-top:2px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        Refresh list
+      </button>
       <div class="sep"></div>
       <button class="btn btn-d btn-full" onclick="clearAll()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -438,6 +453,7 @@ function toggleTheme(){
   document.getElementById('theme-icon-sun').style.display=isDark?'none':'block';
   document.getElementById('theme-icon-moon').style.display=isDark?'block':'none';
   localStorage.setItem('weave-theme',isDark?'dark':'light');
+  render();
 }
 function applyStoredTheme(){
   var t=localStorage.getItem('weave-theme')||'dark';
@@ -452,28 +468,30 @@ function applyStoredTheme(){
 function svgColors(){
   var dark=document.documentElement.classList.contains('dark');
   return {
-    bg:       dark?'#13111e':'#fdf9f4',
+    bg:       dark?'#13111e':'#fdf3e3',
     nodeFill: dark?'#1c1a2e':'#fff8f0',
     laneAlt:  dark?'rgba(240,112,96,0.04)':'rgba(232,96,74,0.03)',
-    grid:     dark?'#2a2545':'#f0d9b0',
+    grid:     dark?'#2a2545':'#e8c990',
     label:    dark?'#a8a0cc':'#7a5c3a',
-    desc:     dark?'#c8c0f0':'#5a3e28',
+    desc:     dark?'#e8e2ff':'#5a3e28',
     listBg:   dark?'#1c1a2e':'#fff8f0',
     listBdr:  dark?'#3a3560':'#e8c990',
     listTs:   dark?'#7870aa':'#b08050',
-    listDesc: dark?'#e8e2ff':'#2c1a0e',
+    listDesc: dark?'#ccc8e8':'#3d2b1a',
     listSys:  dark?'#a8a0cc':'#7a5c3a',
     listInt:  dark?'#7870aa':'#b08050',
     accent:   dark?'#f07060':'#e8604a',
     teal:     dark?'#45d0d0':'#3cbfbf',
     proc:     dark?'#8888dd':'#1c8080',
+    actor:    dark?'#fff':'#fff',
   };
 }
 
 // STATE
 var events=[], editIdx=-1, iCount=0, scenName='', scenDesc='', appMode='timeline';
+var sysOrder={}; // { systemName: orderNumber } — lower = earlier in diagram
 var knownSys=new Set();
-var COLORS_L=['#e8604a','#3cbfbf','#f5a623','#1c3444','#c04535','#2a9d8f','#e76f51'];
+var COLORS_L=['#e8604a','#3cbfbf','#f5a623','#7755cc','#c04535','#2a9d8f','#e76f51'];
 var COLORS_D=['#f07060','#45d0d0','#f5b030','#8888cc','#e05050','#35b8b8','#f09070'];
 function COLORS_ARR(){return document.documentElement.classList.contains('dark')?COLORS_D:COLORS_L;}
 
@@ -494,6 +512,19 @@ function fmtTs(ms,showDate){
 function fromDTL(v){return v?new Date(v).getTime():null;}
 function toDTL(iso){return iso?iso.replace('Z','').slice(0,19):'';}
 
+
+// SYSTEM ARRAY — sorted by sysOrder, then alphabetically
+function getSysArray(sySet){
+  var arr=[...sySet];
+  arr.sort(function(a,b){
+    var oa=sysOrder[a]!==undefined?sysOrder[a]:9999;
+    var ob=sysOrder[b]!==undefined?sysOrder[b]:9999;
+    if(oa!==ob) return oa-ob;
+    return a<b?-1:a>b?1:0;
+  });
+  return arr;
+}
+
 // SVG BUILDER
 var NS='http://www.w3.org/2000/svg';
 function sv(tag,attrs,txt){
@@ -509,7 +540,7 @@ function mkSVG(W,H){
     m.appendChild(sv('path',{d:'M0,-5L10,0L0,5',fill:p[1]})); defs.appendChild(m);
   });
   svg.appendChild(defs);
-  svg.appendChild(sv('rect',{width:W,height:H,fill:'#fdf3e3'}));
+  svg.appendChild(sv('rect',{width:W,height:H,fill:svgColors().bg}));
   return svg;
 }
 function scale1d(d0,d1,r0,r1){var f=(d1===d0)?0:(r1-r0)/(d1-d0);return function(v){return r0+(v-d0)*f;};}
@@ -541,6 +572,7 @@ function switchAppMode(m){
 
 // SIDEBAR TABS
 function switchTab(tab){
+  if(tab==='scenario') setTimeout(refreshSysOrderUI,50);
   ['add','events','scenario'].forEach(function(t){
     document.getElementById('stab-'+t).classList.toggle('active',t===tab);
     document.getElementById('panel-'+t).classList.toggle('active',t===tab);
@@ -694,7 +726,7 @@ function updateList(){
 
 // IMPORT / EXPORT
 function exportData(){
-  var data={version:3,appMode:appMode,scenarioName:scenName,scenarioDesc:scenDesc,
+  var data={version:3,appMode:appMode,scenarioName:scenName,scenarioDesc:scenDesc,sysOrder:sysOrder,
     settings:{viewMode:document.getElementById('view-mode').value,
               orientation:document.getElementById('orientation').value,
               showDate:document.getElementById('show-date').checked,
@@ -723,7 +755,7 @@ function importData(e){
         document.getElementById('flow-dir').value=data.settings.flowDirection||'lr';
         document.getElementById('show-seq').checked=data.settings.showSeq!==false;
       }
-      events=data.events||[]; knownSys.clear();
+      events=data.events||[]; sysOrder=data.sysOrder||{}; knownSys.clear();
       events.forEach(function(ev){
         if(ev.system) knownSys.add(ev.system);
         (ev.interactions||[]).forEach(function(i){if(i.target) knownSys.add(i.target);});
@@ -776,7 +808,7 @@ function renderList(parent,sorted){
 function renderTimeline(parent,sorted,orientation){
   var sySet=new Set();
   sorted.forEach(function(e){sySet.add(e.system);(e.interactions||[]).forEach(function(i){if(i.target)sySet.add(i.target);});});
-  var sysArr=[...sySet].sort(), N=sysArr.length, isH=orientation==='horizontal';
+  var sysArr=getSysArray(sySet), N=sysArr.length, isH=orientation==='horizontal';
   var minT=sorted[0].timestamp, maxT=sorted[0].timestamp;
   sorted.forEach(function(e){
     minT=Math.min(minT,e.timestamp); maxT=Math.max(maxT,e.timestamp);
@@ -844,7 +876,7 @@ function renderFlow(parent,direction,showSeq){
   ensureIds();
   var sySet=new Set();
   events.forEach(function(e){sySet.add(e.system);(e.interactions||[]).forEach(function(i){if(i.target)sySet.add(i.target);});});
-  var sysArr=[...sySet].sort();
+  var sysArr=getSysArray(sySet);
   var evMap={}; events.forEach(function(e){evMap[e._id]=e;});
   var edges=[];
   events.forEach(function(src){
@@ -911,13 +943,13 @@ function renderFlow(parent,direction,showSeq){
     aR(g,bx-2,by-2,BW+4,BH+4,{rx:11,fill:'none',stroke:color,'stroke-width':2,opacity:.25});
     aR(g,bx,by,BW,BH,{rx:9,fill:svgColors().nodeFill,stroke:color,'stroke-width':1.5});
     if(showSeq){
-      aR(g,bx,by,24,BH,{rx:9,fill:color,opacity:.18});
-      aT(g,bx+12,c.y+4,String(seqIdx+1),{'text-anchor':'middle','font-size':'9','fill':svgColors().actor,'font-weight':'700','font-family':'DM Mono,monospace'});
+      aR(g,bx,by,26,BH,{rx:9,fill:color,opacity:.15});
+      aT(g,bx+13,c.y+4,String(seqIdx+1),{'text-anchor':'middle','font-size':'10','fill':color,'font-weight':'800','font-family':'DM Mono,monospace'});
     }
     var tx=showSeq?bx+30:bx+9;
     aT(g,tx,by+17,trunc(ev.system,20),{'font-size':'8','fill':color,'font-family':'DM Mono,monospace','font-weight':'700'});
     aT(g,tx,by+32,trunc(ev.desc,22),{'font-size':'11','fill':svgColors().listDesc,'font-weight':'600'});
-    if(ev.actor) aT(g,tx,by+46,trunc(ev.actor,22),{'font-size':'9','fill':'#b08050'});
+    if(ev.actor) aT(g,tx,by+46,trunc(ev.actor,22),{'font-size':'9','fill':svgColors().listTs});
   });
   // legend
   [['push \u2192',svgColors().accent],['pull \u2190',svgColors().teal],['process',svgColors().proc]].forEach(function(item,li){
@@ -926,6 +958,46 @@ function renderFlow(parent,direction,showSeq){
     aT(g,lx+22,ly+9,item[0],{'font-size':'10','fill':svgColors().label,'font-family':'DM Mono,monospace'});
   });
   parent.appendChild(svg);
+}
+
+
+// SYSTEM ORDER UI
+function refreshSysOrderUI(){
+  var container=document.getElementById('sys-order-list');
+  if(!container) return;
+  // Collect all known systems from events
+  var sySet=new Set();
+  events.forEach(function(e){
+    if(e.system) sySet.add(e.system);
+    (e.interactions||[]).forEach(function(i){if(i.target) sySet.add(i.target);});
+  });
+  [...knownSys].forEach(function(s){sySet.add(s);});
+  var arr=[...sySet].sort();
+  container.innerHTML='';
+  if(!arr.length){
+    container.innerHTML='<span class="hint">No systems yet — add events first.</span>';
+    return;
+  }
+  arr.forEach(function(sys){
+    var row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:8px';
+    var lbl=document.createElement('span');
+    lbl.style.cssText='flex:1;font-size:.83rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    lbl.textContent=sys;
+    var inp=document.createElement('input');
+    inp.type='number'; inp.min='1'; inp.step='1';
+    inp.style.cssText='width:64px;flex-shrink:0;padding:5px 8px;font-size:.8rem';
+    inp.placeholder='#';
+    if(sysOrder[sys]!==undefined) inp.value=sysOrder[sys];
+    inp.addEventListener('change',function(){
+      var v=inp.value.trim();
+      if(v==='') delete sysOrder[sys];
+      else sysOrder[sys]=parseInt(v)||0;
+      render();
+    });
+    row.appendChild(lbl); row.appendChild(inp);
+    container.appendChild(row);
+  });
 }
 
 // INIT
