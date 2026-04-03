@@ -1,5 +1,16 @@
 // ── UI ──────────────────────────────────────────────
 
+// ABOUT MODAL
+function openAbout(){
+  document.getElementById('about-version-num').textContent=APP_VERSION;
+  document.getElementById('about-year').textContent=new Date().getFullYear();
+  document.getElementById('about-modal').classList.add('open');
+}
+function closeAbout(){
+  document.getElementById('about-modal').classList.remove('open');
+}
+
+
 // THEME TOGGLE
 function toggleTheme(){
   var isDark=document.documentElement.classList.toggle('dark');
@@ -412,4 +423,7 @@ function refreshActorDL(){
 document.addEventListener('DOMContentLoaded',function(){
   applyStoredTheme();
   switchAppMode('timeline'); refreshDL(); refreshActorDL(); updateList(); render();
+  document.getElementById('about-modal').addEventListener('click',function(e){
+    if(e.target===this) closeAbout();
+  });
 });

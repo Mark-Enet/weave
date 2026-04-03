@@ -46,6 +46,11 @@
         <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
       </svg>Export
     </button>
+    <button class="nav-btn" onclick="openAbout()" title="About Weave">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>About
+    </button>
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Toggle dark/light mode">
       <svg id="theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
         <circle cx="12" cy="12" r="5"/>
@@ -192,6 +197,18 @@
   <span id="ticon">&#x2713;</span><span id="tmsg"></span>
 </div>
 
+
+<div class="modal-overlay" id="about-modal">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-label="About Weave">
+    <button class="modal-close" onclick="closeAbout()" title="Close">&#x2715;</button>
+    <div class="about-logo"><img src="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCAgMDAwMEAwMEBQgFBQQEBQoHBwYIDAoMDAsKCwsNDhIQDQ4RDgsLEBYQERMUFRUVDA8XGBYUGBIUFRT/wAARCABAAEADASIAAhEBAxEB/8QAGwAAAgMBAQEAAAAAAAAAAAAABQYDBAcCAQD/xAA0EAABAwMDAgQFAQkAAAAAAAABAgMEBREAITFBBhJRExRhcYGRoSIjMkJSU2KCkrHB/8QAGQEAAwEBAQAAAAAAAAAAAAAAAQIDAAQF/8QAIREAAgICAgMBAQAAAAAAAAAAAQIAERIhMQMTQWH/2gAMAwEAAhEDEQA/AKmHB1l9VC5Lq47RQFnmS2AlSv5Izv8APhUmFpXV0o8RtqUGlqKC8oJCUnsMnP8AJqi1MNBpTxecEr7U5cWqQ25IkF1LrQ4nFj0LbgVjyPmB/Ksy8pvS7y18L7UjW1oQ46XgylB5sgHYn7E4B8sV05R8U1t2lqZOqpFRoNVrp0zJmKedUiM2fOVEkBP5Jwn3Bwa1fpdqyMz09LSVNpaQ8HSQB1JKj7YxjOPzPFRajKlSJTUHmXvUXe5z/yNqbddUAB7DgKHkL/NaBpvSJihtIecDcuOopBbKVJOLSDseXjz/wCVRZt3r2g3B6N+oSYrMp+HNecQmOwHBHQDuVnPTA9P2q5ap01JnLkKjKaRNfKT6YSkAqBO2fdXn/BPvVL1bpEadU4UGO4+7GgkhlTn3SoBWMjz4RA/PcVeV7vFT0FCTM+zJjynwpMWWlfKCQMCOrfAI28MjHuTUvZ+LXVbWnYnVuT7HrTSZaolviuutuFoKDSklBTnCh3Af4dqvUWBOk0mK5MJRKXFac43Y5kpBP0rKPSm0FqdW3ZpEiVLHp+sl1IWjOSpYVnbCwT/AEe9aZoDXqUe45l1qDcGLkxbxIjEKQopKl4BKCADyCAfzr2Y8vFJOi7UNYiuLjl0sJJKQAMHHb3FXmCqK/CZXFQlMcthSEoGAMd/etJTrxdnbtulymVb86W9dWHpQ6uXJLWNz5PuBVq8M7YfXe4UaZtlbqSE+5xn8q4JTtuQaJKCy4RluS2VKRlJJCkd3bJA7kkjHsKlqm28XE+bSZfcTIWrulJIO33ypPP6ZPpWTKiXHpq6TyWk9JJJJJJ5P8A/9k=" alt="Weave Logo"></div>
+    <h2 class="about-title">Weave</h2>
+    <p class="about-sub">Integration Diagram Studio</p>
+    <p class="about-version">Version <strong id="about-version-num"></strong></p>
+    <p class="about-copy">&copy; <span id="about-year"></span> <a href="https://widgemo.com" target="_blank" rel="noopener noreferrer">Widgemo</a></p>
+    <a class="about-link" href="https://widgemo.com" target="_blank" rel="noopener noreferrer">widgemo.com</a>
+  </div>
+</div>
 
 <script src="js/state.js"></script>
 <script src="js/render.js"></script>
