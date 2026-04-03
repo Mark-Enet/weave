@@ -36,6 +36,15 @@ Deployed as a GitHub Pages site.
 - Arrowheads use SVG markers with unique IDs per render (`arr-push-{rid}`)
 - Lines clip to box/circle edges so arrowheads sit on the card border
 
+## About section & versioning
+- `APP_VERSION` is declared in `js/state.js` and displayed in the About modal (opened via the "About" banner button).
+- Version format is `YYYY.MM.DD` (UTC date), auto-updated by the GitHub Actions workflow at `.github/workflows/update-version.yml` on every push to `main`.
+- The workflow runs a `sed` command to patch `APP_VERSION` in `js/state.js` and commits the change automatically. The commit message is `chore: update version to YYYY.MM.DD` — the workflow skips itself when it sees this message to avoid infinite loops.
+- To manually set a version, edit the `APP_VERSION` line in `js/state.js`:
+  ```js
+  var APP_VERSION = '2026.04.03';
+  ```
+
 ## Important constraints
 - Must remain deployable as static GitHub Pages (no server, no build step)
 - All files are loaded via relative paths — no CDN JS dependencies
