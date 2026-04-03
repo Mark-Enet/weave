@@ -40,55 +40,104 @@ function renderFlow(parent,direction,showSeq){
     if(isLR) aT(g,-10,lp+BH/2+20,sys,{'text-anchor':'end','dominant-baseline':'middle','font-weight':'600','font-size':'12','fill':svgColors().label});
     else     aT(g,lp+BW/2+10,-20,sys,{'text-anchor':'middle','font-weight':'600','font-size':'12','fill':svgColors().label});
   });
-  // causal edges (sorted by order within each source event)
+
+  // ── Arrow grouping helpers ──
+  var ARROW_OFFSET=8;
+  var PAD=6, HW=BW/2+PAD, HH=BH/2+PAD;
+  function pairKey(sx,sy,tx,ty){
+    var a=Math.round(sx)+'_'+Math.round(sy), b=Math.round(tx)+'_'+Math.round(ty);
+    return a<b?a+'|'+b:b+'|'+a;
+  }
+  function isFwd(sx,sy,tx,ty){
+    var a=Math.round(sx)+'_'+Math.round(sy), b=Math.round(tx)+'_'+Math.round(ty);
+    return a<=b;
+  }
+  function assignOffsets(arrows){
+    var groups={};
+    arrows.forEach(function(ar){
+      var k=pairKey(ar.sx,ar.sy,ar.tx,ar.ty);
+      if(!groups[k]) groups[k]=[];
+      groups[k].push(ar);
+    });
+    Object.keys(groups).forEach(function(k){
+      var grp=groups[k];
+      if(grp.length<=1) return;
+      var fwd=grp.filter(function(a){return isFwd(a.sx,a.sy,a.tx,a.ty);});
+      var rev=grp.filter(function(a){return !isFwd(a.sx,a.sy,a.tx,a.ty);});
+      if(fwd.length>0&&rev.length>0){
+        fwd.forEach(function(a,i){a._offset=(i-(fwd.length-1)/2)*ARROW_OFFSET+ARROW_OFFSET/2;});
+        rev.forEach(function(a,i){a._offset=(i-(rev.length-1)/2)*ARROW_OFFSET-ARROW_OFFSET/2;});
+      } else {
+        grp.forEach(function(a,i){a._offset=(i-(grp.length-1)/2)*ARROW_OFFSET;});
+      }
+    });
+  }
+  function perpOffset(sx,sy,tx,ty,off){
+    var dx=tx-sx, dy=ty-sy, dist=Math.sqrt(dx*dx+dy*dy)||1;
+    return {px:-dy/dist*off, py:dx/dist*off};
+  }
+  function clipToBox(from,to,hw,hh){
+    var dx=to.x-from.x, dy=to.y-from.y;
+    if(dx===0&&dy===0) return {x:from.x,y:from.y};
+    var t=Math.min(hw/Math.abs(dx||1),hh/Math.abs(dy||1));
+    return {x:from.x+dx*t, y:from.y+dy*t};
+  }
+
+  // ── Causal edges ──
   var sortedEdges=[...edges].sort(function(a,b){return (a.inter.order||0)-(b.inter.order||0);});
-  // Group by source to number per-source
   var edgeOrderByFrom={};
   sortedEdges.forEach(function(ed){
     if(!edgeOrderByFrom[ed.from]) edgeOrderByFrom[ed.from]=0;
     ed._seqLabel=edgeOrderByFrom[ed.from]+1;
     edgeOrderByFrom[ed.from]++;
   });
+
+  // Collect causal arrows
+  var causalArrows=[];
   sortedEdges.forEach(function(ed){
     var src=bC(ed.from), dst=bC(ed.to);
     var color=ed.inter.nature==='push'?svgColors().accent:ed.inter.nature==='pull'?svgColors().teal:svgColors().proc;
-    var isPull=ed.inter.nature==='pull';
+    causalArrows.push({
+      sx:src.x,sy:src.y,tx:dst.x,ty:dst.y,
+      nature:ed.inter.nature,color:color,isPull:ed.inter.nature==='pull',
+      label:ed.inter.label||'',seqLabel:ed._seqLabel,_offset:0
+    });
+  });
+  assignOffsets(causalArrows);
 
-    var PAD=6, HW=BW/2+PAD, HH=BH/2+PAD;
-    function clipToBox(from,to,hw,hh){
-      var dx=to.x-from.x, dy=to.y-from.y;
-      if(dx===0&&dy===0) return {x:from.x,y:from.y};
-      var t=Math.min(hw/Math.abs(dx||1),hh/Math.abs(dy||1));
-      return {x:from.x+dx*t, y:from.y+dy*t};
-    }
+  // Draw causal arrows
+  causalArrows.forEach(function(ar){
+    var p=perpOffset(ar.sx,ar.sy,ar.tx,ar.ty,ar._offset);
+    var osx=ar.sx+p.px, osy=ar.sy+p.py;
+    var otx=ar.tx+p.px, oty=ar.ty+p.py;
 
     var p1,p2,mEnd;
-    if(isPull){
-      p1=clipToBox(dst,src,HW,HH);
-      p2=clipToBox(src,dst,HW,HH);
+    if(ar.isPull){
+      p1=clipToBox({x:ar.tx,y:ar.ty},{x:osx,y:osy},HW,HH);
+      p2=clipToBox({x:ar.sx,y:ar.sy},{x:otx,y:oty},HW,HH);
       mEnd='url(#arr-pull-'+rid+')';
     } else {
-      p1=clipToBox(src,dst,HW,HH);
-      p2=clipToBox(dst,src,HW,HH);
-      mEnd='url(#arr-'+ed.inter.nature+'-'+rid+')';
+      p1=clipToBox({x:ar.sx,y:ar.sy},{x:otx,y:oty},HW,HH);
+      p2=clipToBox({x:ar.tx,y:ar.ty},{x:osx,y:osy},HW,HH);
+      mEnd='url(#arr-'+ar.nature+'-'+rid+')';
     }
-    if(ed.inter.nature==='process') mEnd='';
+    if(ar.nature==='process') mEnd='';
 
-    // Straight line — arrowhead tangent is always perfectly aligned
     aL(g,p1.x,p1.y,p2.x,p2.y,{
-      stroke:color,'stroke-width':2,
-      'stroke-dasharray':ed.inter.nature==='process'?'5,4':'',
+      stroke:ar.color,'stroke-width':2,
+      'stroke-dasharray':ar.nature==='process'?'5,4':'',
       'marker-end':mEnd
     });
 
-    // Label and badge at midpoint
     var mx=(p1.x+p2.x)/2, my=(p1.y+p2.y)/2;
-    aT(g,mx,my-12,ed.inter.label||'',
-      {'text-anchor':'middle','font-size':'9','fill':color,'font-family':'DM Mono,monospace'});
-    aC(g,mx,my,9,{fill:color,opacity:.9});
-    aT(g,mx,my+3,String(ed._seqLabel||''),{'text-anchor':'middle','font-size':'8','fill':'#fff','font-weight':'800','font-family':'DM Mono,monospace'});
+    aT(g,mx,my-12,ar.label,
+      {'text-anchor':'middle','font-size':'9','fill':ar.color,'font-family':'DM Mono,monospace'});
+    aC(g,mx,my,9,{fill:ar.color,opacity:.9});
+    aT(g,mx,my+3,String(ar.seqLabel||''),{'text-anchor':'middle','font-size':'8','fill':'#fff','font-weight':'800','font-family':'DM Mono,monospace'});
   });
-  // system-only interactions (sorted by order)
+
+  // ── System-only interactions ──
+  var sysArrows=[];
   events.forEach(function(srcEv){
     var src=bC(srcEv._id);
     var sortedSysI=[...(srcEv.interactions||[])].sort(function(a,b){return (a.order||0)-(b.order||0);});
@@ -96,43 +145,44 @@ function renderFlow(parent,direction,showSeq){
       if(inter.triggerEventId||!inter.target) return;
       var ti2=sysArr.indexOf(inter.target); if(ti2===-1) return;
       var color=inter.nature==='push'?svgColors().accent:inter.nature==='pull'?svgColors().teal:svgColors().proc;
-      var isPull=inter.nature==='pull';
-
-      // Target lane centre (approximate — no specific event, just the lane midpoint)
       var tLP=isLR?ti2*LG+BH/2+20:ti2*SG+BW/2+10;
       var tx=isLR?src.x+60:tLP, ty=isLR?tLP:src.y+80;
-
-      // Clip from src box edge toward target
-      var PAD=6, HW=BW/2+PAD, HH=BH/2+PAD;
-      function clipBox(cx,cy,ox,oy){
-        var dx=ox-cx,dy=oy-cy;
-        if(dx===0&&dy===0) return {x:cx,y:cy};
-        var t=Math.min(HW/Math.abs(dx||1),HH/Math.abs(dy||1));
-        return {x:cx+dx*t,y:cy+dy*t};
-      }
-
-      var x1,y1,x2,y2,mEnd;
-      if(isPull){
-        // Arrow from target lane toward src box edge
-        x1=tx; y1=ty;
-        var clip=clipBox(src.x,src.y,tx,ty);
-        x2=clip.x; y2=clip.y;
-        mEnd='url(#arr-pull-'+rid+')';
-      } else {
-        var clip=clipBox(src.x,src.y,tx,ty);
-        x1=clip.x; y1=clip.y;
-        x2=tx; y2=ty;
-        mEnd='url(#arr-'+inter.nature+'-'+rid+')';
-      }
-
-      if(inter.nature==='process') mEnd='';
-      aL(g,x1,y1,x2,y2,{stroke:color,'stroke-width':1.5,'stroke-dasharray':'4,3','marker-end':mEnd});
-      var lmx=(x1+x2)/2, lmy=(y1+y2)/2;
-      aT(g,lmx,lmy-8,inter.label||'',{'text-anchor':'middle','font-size':'9','fill':color,'font-family':'DM Mono,monospace'});
-      aC(g,lmx,lmy+4,8,{fill:color,opacity:.9});
-      aT(g,lmx,lmy+7,String(iIdx+1),{'text-anchor':'middle','font-size':'7','fill':'#fff','font-weight':'800','font-family':'DM Mono,monospace'});
+      sysArrows.push({
+        sx:src.x,sy:src.y,tx:tx,ty:ty,
+        nature:inter.nature,color:color,isPull:inter.nature==='pull',
+        label:inter.label||'',seqIdx:iIdx,_offset:0
+      });
     });
   });
+  assignOffsets(sysArrows);
+
+  // Draw system-only arrows
+  sysArrows.forEach(function(ar){
+    var p=perpOffset(ar.sx,ar.sy,ar.tx,ar.ty,ar._offset);
+    var osx=ar.sx+p.px, osy=ar.sy+p.py;
+    var otx=ar.tx+p.px, oty=ar.ty+p.py;
+
+    var x1,y1,x2,y2,mEnd;
+    if(ar.isPull){
+      x1=otx; y1=oty;
+      var clip=clipToBox({x:ar.sx,y:ar.sy},{x:otx,y:oty},HW,HH);
+      x2=clip.x; y2=clip.y;
+      mEnd='url(#arr-pull-'+rid+')';
+    } else {
+      var clip=clipToBox({x:ar.sx,y:ar.sy},{x:otx,y:oty},HW,HH);
+      x1=clip.x; y1=clip.y;
+      x2=otx; y2=oty;
+      mEnd='url(#arr-'+ar.nature+'-'+rid+')';
+    }
+    if(ar.nature==='process') mEnd='';
+
+    aL(g,x1,y1,x2,y2,{stroke:ar.color,'stroke-width':1.5,'stroke-dasharray':'4,3','marker-end':mEnd});
+    var lmx=(x1+x2)/2, lmy=(y1+y2)/2;
+    aT(g,lmx,lmy-8,ar.label,{'text-anchor':'middle','font-size':'9','fill':ar.color,'font-family':'DM Mono,monospace'});
+    aC(g,lmx,lmy+4,8,{fill:ar.color,opacity:.9});
+    aT(g,lmx,lmy+7,String(ar.seqIdx+1),{'text-anchor':'middle','font-size':'7','fill':'#fff','font-weight':'800','font-family':'DM Mono,monospace'});
+  });
+
   // event boxes
   order.forEach(function(evId,seqIdx){
     var ev=evMap[evId]; if(!ev) return;
@@ -156,4 +206,3 @@ function renderFlow(parent,direction,showSeq){
   });
   parent.appendChild(svg);
 }
-
