@@ -132,7 +132,7 @@ function renderTimeline(parent,sorted,orientation){
     var si=sysArr.indexOf(e.system), tp=sc(e.timestamp), bp=lp(si);
     var cx=isH?tp:bp, cy=isH?bp:tp, color=COLORS_ARR()[si%COLORS_ARR().length];
     aC(g,cx,cy,13,{fill:svgColors().nodeFill,stroke:color,'stroke-width':'2.5'});
-    if(displayConfig.showActor) aT(g,cx,cy+4,initials(e.actor),{'text-anchor':'middle','font-size':'9','fill':svgColors().actor,'font-weight':'700','font-family':'DM Mono,monospace'});
+    if(displayConfig.showActor&&e.actor) aT(g,cx,cy+4,initials(e.actor),{'text-anchor':'middle','font-size':'9','fill':svgColors().actor,'font-weight':'700','font-family':'DM Mono,monospace'});
     aT(g,isH?cx:cx+17,isH?cy+26:cy+4,trunc(e.desc,30),{'text-anchor':isH?'middle':'start','font-size':'11','fill':svgColors().label});
     if(displayConfig.showLevel&&e.level){
       var lc=levelColor(e.level);
