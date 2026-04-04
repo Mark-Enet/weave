@@ -203,7 +203,7 @@ function renderFlow(parent,direction,showSeq){
       aT(g,bx+BW-20,by+16,ev.level.toUpperCase(),{'text-anchor':'middle','font-size':'7','fill':lc,'font-family':'DM Mono,monospace','font-weight':'800'});
     }
     aT(g,tx,by+32,trunc(ev.desc,22),{'font-size':'11','fill':svgColors().listDesc,'font-weight':'600'});
-    if(ev.actor) aT(g,tx,by+46,trunc(ev.actor,22),{'font-size':'9','fill':svgColors().listTs});
+    if(displayConfig.showActor&&ev.actor) aT(g,tx,by+46,trunc(ev.actor,22),{'font-size':'9','fill':svgColors().listTs});
     var ey=by+46;
     if(displayConfig.showEventCode){
       ey+=13;

@@ -160,6 +160,9 @@ function saveDisplayConfig(){
   displayConfig.showLevel=document.getElementById('dc-level').checked;
   displayConfig.showEventCode=document.getElementById('dc-event-code').checked;
   displayConfig.showManagedIntegrationCode=document.getElementById('dc-managed-integration-code').checked;
+  displayConfig.showActor=document.getElementById('dc-actor').checked;
+  displayConfig.showDate=document.getElementById('dc-show-date').checked;
+  displayConfig.showSeq=document.getElementById('dc-show-seq').checked;
   render();
 }
 function saveEvent(){
@@ -442,6 +445,9 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('dc-level').checked=displayConfig.showLevel;
   document.getElementById('dc-event-code').checked=displayConfig.showEventCode;
   document.getElementById('dc-managed-integration-code').checked=displayConfig.showManagedIntegrationCode;
+  document.getElementById('dc-actor').checked=displayConfig.showActor;
+  document.getElementById('dc-show-date').checked=displayConfig.showDate;
+  document.getElementById('dc-show-seq').checked=displayConfig.showSeq;
   document.getElementById('about-modal').addEventListener('click',function(e){
     if(e.target===this) closeAbout();
   });
