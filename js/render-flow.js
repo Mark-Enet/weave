@@ -1,29 +1,30 @@
 // ── FLOW DIAGRAM ────────────────────────────────────
-function renderFlow(parent,direction,showSeq){
+function renderFlow(parent,direction,showSeq,filteredEvents){
   ensureIds();
+  var evList=filteredEvents||events;
   var sySet=new Set();
-  events.forEach(function(e){sySet.add(e.system);(e.interactions||[]).forEach(function(i){if(i.target)sySet.add(i.target);});});
+  evList.forEach(function(e){sySet.add(e.system);(e.interactions||[]).forEach(function(i){if(i.target)sySet.add(i.target);});});
   var sysArr=getSysArray(sySet);
-  var evMap={}; events.forEach(function(e){evMap[e._id]=e;});
+  var evMap={}; evList.forEach(function(e){evMap[e._id]=e;});
   var edges=[];
-  events.forEach(function(src){
+  evList.forEach(function(src){
     (src.interactions||[]).forEach(function(inter){
       if(inter.triggerEventId&&evMap[inter.triggerEventId]) edges.push({from:src._id,to:inter.triggerEventId,inter:inter});
     });
   });
   // topo sort
-  var inDeg={}; events.forEach(function(e){inDeg[e._id]=0;});
+  var inDeg={}; evList.forEach(function(e){inDeg[e._id]=0;});
   edges.forEach(function(ed){inDeg[ed.to]=(inDeg[ed.to]||0)+1;});
-  var queue=events.filter(function(e){return!inDeg[e._id];}).map(function(e){return e._id;});
+  var queue=evList.filter(function(e){return!inDeg[e._id];}).map(function(e){return e._id;});
   var order=[], vis=new Set();
   while(queue.length){
     var nid=queue.shift(); if(vis.has(nid)) continue; vis.add(nid); order.push(nid);
     edges.filter(function(ed){return ed.from===nid;}).forEach(function(ed){if(--inDeg[ed.to]===0)queue.push(ed.to);});
   }
-  events.forEach(function(e){if(!vis.has(e._id)) order.push(e._id);});
+  evList.forEach(function(e){if(!vis.has(e._id)) order.push(e._id);});
   var isLR=direction==='lr';
   var seqOf={}; order.forEach(function(id,i){seqOf[id]=i;});
-  var rowOf={}; events.forEach(function(e){rowOf[e._id]=sysArr.indexOf(e.system);});
+  var rowOf={}; evList.forEach(function(e){rowOf[e._id]=sysArr.indexOf(e.system);});
   var extraRows=(displayConfig.showEventCode?1:0)+(displayConfig.showManagedIntegrationCode?1:0);
   var BW=170,BH=58+extraRows*13,LG=isLR?105+extraRows*13:210,SG=isLR?215:165+extraRows*13;
   function bC(id){
@@ -139,7 +140,7 @@ function renderFlow(parent,direction,showSeq){
 
   // ── System-only interactions ──
   var sysArrows=[];
-  events.forEach(function(srcEv){
+  evList.forEach(function(srcEv){
     var src=bC(srcEv._id);
     var sortedSysI=[...(srcEv.interactions||[])].sort(function(a,b){return (a.order||0)-(b.order||0);});
     sortedSysI.forEach(function(inter,iIdx){

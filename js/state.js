@@ -6,6 +6,7 @@ var systemsRegistry=[]; // [{name,desc,order}]
 var actorsRegistry=[];  // [{name,desc}]
 var knownSys=new Set();
 var displayConfig={showLevel:true,showEventCode:true,showManagedIntegrationCode:true,showActor:true,showDate:true,showSeq:true};
+var filterConfig={text:'',systems:[],actors:[],levels:[],eventCodes:[],integrationCodes:[]};
 var COLORS_L=['#e8604a','#3cbfbf','#f5a623','#7755cc','#c04535','#2a9d8f','#e76f51'];
 var COLORS_D=['#f07060','#45d0d0','#f5b030','#8888cc','#e05050','#35b8b8','#f09070'];
 function COLORS_ARR(){return document.documentElement.classList.contains('dark')?COLORS_D:COLORS_L;}
@@ -64,3 +65,24 @@ function getSysArray(sySet){
 
 // ENSURE IDS
 function ensureIds(){events.forEach(function(ev,i){if(!ev._id) ev._id='evt-'+Date.now()+'-'+i;});}
+
+// ACTIVE (FILTERED) EVENTS
+function getActiveEvents(){
+  var q=(filterConfig.text||'').trim().toLowerCase();
+  return events.filter(function(ev){
+    if(q){
+      var hay=[ev.desc,ev.system,ev.actor,ev.eventCode,ev.managedIntegrationCode,ev.level].join(' ').toLowerCase();
+      if(hay.indexOf(q)===-1) return false;
+    }
+    if(filterConfig.systems.length&&filterConfig.systems.indexOf(ev.system)===-1) return false;
+    if(filterConfig.actors.length&&filterConfig.actors.indexOf(ev.actor||'')===-1) return false;
+    if(filterConfig.levels.length&&filterConfig.levels.indexOf(ev.level||'')===-1) return false;
+    if(filterConfig.eventCodes.length&&filterConfig.eventCodes.indexOf(ev.eventCode||'')===-1) return false;
+    if(filterConfig.integrationCodes.length&&filterConfig.integrationCodes.indexOf(ev.managedIntegrationCode||'')===-1) return false;
+    return true;
+  });
+}
+function isFilterActive(){
+  return !!(filterConfig.text.trim()||filterConfig.systems.length||filterConfig.actors.length||
+    filterConfig.levels.length||filterConfig.eventCodes.length||filterConfig.integrationCodes.length);
+}
