@@ -88,6 +88,25 @@
         <input type="text" id="actor" list="actor-dl" placeholder="Who or what initiates this?" autocomplete="off">
         <datalist id="actor-dl"></datalist>
       </div>
+      <div class="fg">
+        <label class="fl">Event Level</label>
+        <select id="event-level">
+          <option value="">— None —</option>
+          <option value="info">Info</option>
+          <option value="warning">Warning</option>
+          <option value="error">Error</option>
+        </select>
+      </div>
+      <div class="mgrid">
+        <div class="fg">
+          <label class="fl">Event Code</label>
+          <input type="text" id="event-code" placeholder="e.g. EVT-001">
+        </div>
+        <div class="fg">
+          <label class="fl">Integration Code</label>
+          <input type="text" id="managed-integration-code" placeholder="e.g. INT-001">
+        </div>
+      </div>
       <div class="fg ts-field" id="ts-fg">
         <label class="fl">Timestamp</label>
         <input type="datetime-local" id="ts" step="1">
@@ -142,6 +161,14 @@
         <textarea id="scenario-desc" rows="3" placeholder="Optional notes…" style="resize:vertical"></textarea>
       </div>
       <button class="btn btn-p" onclick="saveScenario()">Save Scenario Info</button>
+      <div class="sep"></div>
+      <div class="sh"><span class="st">Card Display</span></div>
+      <span class="hint">Choose which attributes to show on event cards in diagrams.</span>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:2px">
+        <label class="tchk"><input type="checkbox" id="dc-level" checked onchange="saveDisplayConfig()"> Event Level</label>
+        <label class="tchk"><input type="checkbox" id="dc-event-code" checked onchange="saveDisplayConfig()"> Event Code</label>
+        <label class="tchk"><input type="checkbox" id="dc-managed-integration-code" checked onchange="saveDisplayConfig()"> Managed Integration Code</label>
+      </div>
       <div class="sep"></div>
       <div class="sh"><span class="st">System Lane Order</span></div>
       <span class="hint">Assign a number to each system to control lane order in diagrams. Lower = first. Leave blank for alphabetical.</span>
