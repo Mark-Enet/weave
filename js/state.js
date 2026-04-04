@@ -31,6 +31,8 @@ function svgColors(){
     teal:     dark?'#45d0d0':'#3cbfbf',
     proc:     dark?'#8888dd':'#1c8080',
     actor:    dark?'#fff':'#fff',
+    debug:    dark?'#99aacc':'#5566aa',
+    subRowBg: dark?'rgba(30,26,50,.6)':'rgba(255,248,240,.9)',
   };
 }
 
