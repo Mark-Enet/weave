@@ -43,7 +43,7 @@ function importData(e){
         if(ev.system) knownSys.add(ev.system);
         (ev.interactions||[]).forEach(function(i){if(i.target) knownSys.add(i.target);});
       });
-      refreshDL(); render(); updateList(); toast('Imported','\u2191');
+      refreshDL(); clearFilters(); render(); updateList(); toast('Imported','\u2191');
     }catch(err){toast('Invalid file','X');}
   };
   reader.readAsText(file); e.target.value='';

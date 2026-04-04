@@ -58,16 +58,22 @@ function render(){
   var ca=document.getElementById('chart'); ca.innerHTML='';
   var te=document.getElementById('stitle');
   te.innerHTML=scenName?'<div class="sbanner">'+esc(scenName)+'<span class="ssub">'+esc(scenDesc)+'</span></div>':'';
-  if(!events.length){
-    ca.innerHTML='<div class="estate"><div class="estate-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></div>'+
-      '<h3>No events yet</h3><p>Add events in the sidebar, then they will appear here as a diagram.</p></div>';
+  var active=getActiveEvents();
+  if(!active.length){
+    if(!events.length){
+      ca.innerHTML='<div class="estate"><div class="estate-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg></div>'+
+        '<h3>No events yet</h3><p>Add events in the sidebar, then they will appear here as a diagram.</p></div>';
+    } else {
+      ca.innerHTML='<div class="estate"><div class="estate-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>'+
+        '<h3>No events match filters</h3><p>Adjust or clear the active filters to see events.</p></div>';
+    }
     return;
   }
   if(appMode==='timeline'){
-    var sorted=[...events].sort(function(a,b){return(a.timestamp||0)-(b.timestamp||0);});
+    var sorted=[...active].sort(function(a,b){return(a.timestamp||0)-(b.timestamp||0);});
     document.getElementById('view-mode').value==='single'?renderList(ca,sorted):renderTimeline(ca,sorted,document.getElementById('orientation').value);
   }else{
-    renderFlow(ca,document.getElementById('flow-dir').value,displayConfig.showSeq);
+    renderFlow(ca,document.getElementById('flow-dir').value,displayConfig.showSeq,active);
   }
 }
 

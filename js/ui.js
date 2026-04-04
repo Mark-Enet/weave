@@ -198,7 +198,7 @@ function saveEvent(){
   };
   if(editIdx>=0){events[editIdx]=ev;toast('Event updated','\u270f');}
   else{events.push(ev);toast('Event saved','\u2713');}
-  refreshDL(); clearForm(); render(); updateList();
+  refreshDL(); clearForm(); render(); updateList(); refreshFilterBar();
 }
 function editEvent(idx){
   var e=events[idx]; editIdx=idx; switchTab('add');
@@ -219,7 +219,7 @@ function deleteEvent(idx){
   if(!confirm('Delete this event?')) return;
   events.splice(idx,1);
   if(editIdx===idx) clearForm(); else if(editIdx>idx) editIdx--;
-  render(); updateList(); toast('Deleted','\uD83D\uDDD1');
+  render(); updateList(); refreshFilterBar(); toast('Deleted','\uD83D\uDDD1');
 }
 function clearForm(){
   document.getElementById('desc').value='';
@@ -240,7 +240,7 @@ function saveScenario(){
 }
 function clearAll(){
   if(!confirm('Delete ALL events? Cannot be undone.')) return;
-  events=[]; editIdx=-1; clearForm(); render(); updateList(); toast('Cleared','X');
+  events=[]; editIdx=-1; clearForm(); clearFilters(); render(); updateList(); toast('Cleared','X');
 }
 
 // EVENT LIST
