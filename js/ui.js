@@ -156,6 +156,12 @@ function removeI(id){var b=document.getElementById('ib-'+id);if(b)b.remove();ren
 function clearI(){document.getElementById('ic').innerHTML='';iCount=0;}
 
 // SAVE / EDIT / DELETE
+function saveDisplayConfig(){
+  displayConfig.showLevel=document.getElementById('dc-level').checked;
+  displayConfig.showEventCode=document.getElementById('dc-event-code').checked;
+  displayConfig.showManagedIntegrationCode=document.getElementById('dc-managed-integration-code').checked;
+  render();
+}
 function saveEvent(){
   var desc=(document.getElementById('desc').value||'').trim();
   if(!desc){toast('Please enter a description','\u26a0');return;}
@@ -182,6 +188,9 @@ function saveEvent(){
   var ev={
     _id:editIdx>=0?events[editIdx]._id:'evt-'+Date.now(),
     desc:desc,system:sys,actor:(document.getElementById('actor').value||'').trim(),
+    level:(document.getElementById('event-level').value||'')||null,
+    eventCode:(document.getElementById('event-code').value||'').trim()||null,
+    managedIntegrationCode:(document.getElementById('managed-integration-code').value||'').trim()||null,
     timestamp:ts,timestampStr:tsStr,interactions:ints,mode:appMode
   };
   if(editIdx>=0){events[editIdx]=ev;toast('Event updated','\u270f');}
@@ -193,6 +202,9 @@ function editEvent(idx){
   document.getElementById('desc').value=e.desc||'';
   document.getElementById('actor').value=e.actor||'';
   document.getElementById('system-input').value=e.system||'';
+  document.getElementById('event-level').value=e.level||'';
+  document.getElementById('event-code').value=e.eventCode||'';
+  document.getElementById('managed-integration-code').value=e.managedIntegrationCode||'';
   if(appMode==='timeline'&&e.timestampStr) document.getElementById('ts').value=toDTL(e.timestampStr);
   clearI();
   var sortedInts=[...( e.interactions||[])].sort(function(a,b){return (a.order||0)-(b.order||0);});
@@ -211,6 +223,9 @@ function clearForm(){
   document.getElementById('actor').value='';
   document.getElementById('system-input').value='';
   document.getElementById('ts').value='';
+  document.getElementById('event-level').value='';
+  document.getElementById('event-code').value='';
+  document.getElementById('managed-integration-code').value='';
   clearI(); editIdx=-1;
   document.getElementById('cancel-edit').style.display='none';
   updateList();
@@ -236,6 +251,7 @@ function updateList(){
     var ri=events.indexOf(e), div=document.createElement('div');
     div.className='eitem'+(ri===editIdx?' sel':'');
     var meta='<span class="etag">'+esc(e.system||'?')+'</span>';
+    if(e.level) meta+='<span class="etag elevel-'+esc(e.level)+'">'+esc(e.level)+'</span>';
     if(appMode==='timeline'&&e.timestamp) meta+='<span class="etag">'+new Date(e.timestamp).toISOString().slice(11,19)+'</span>';
     if(appMode==='flow') meta+='<span class="etag">#'+(si+1)+'</span>';
     if(e.actor) meta+='<span class="etag">'+esc(e.actor)+'</span>';
@@ -423,6 +439,9 @@ function refreshActorDL(){
 document.addEventListener('DOMContentLoaded',function(){
   applyStoredTheme();
   switchAppMode('timeline'); refreshDL(); refreshActorDL(); updateList(); render();
+  document.getElementById('dc-level').checked=displayConfig.showLevel;
+  document.getElementById('dc-event-code').checked=displayConfig.showEventCode;
+  document.getElementById('dc-managed-integration-code').checked=displayConfig.showManagedIntegrationCode;
   document.getElementById('about-modal').addEventListener('click',function(e){
     if(e.target===this) closeAbout();
   });

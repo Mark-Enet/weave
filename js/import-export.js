@@ -1,6 +1,7 @@
 // IMPORT / EXPORT
 function exportData(){
   var data={version:3,appMode:appMode,scenarioName:scenName,scenarioDesc:scenDesc,sysOrder:sysOrder,systemsRegistry:systemsRegistry,actorsRegistry:actorsRegistry,
+    displayConfig:displayConfig,
     settings:{viewMode:document.getElementById('view-mode').value,
               orientation:document.getElementById('orientation').value,
               showDate:document.getElementById('show-date').checked,
@@ -30,6 +31,14 @@ function importData(e){
         document.getElementById('show-seq').checked=data.settings.showSeq!==false;
       }
       events=data.events||[]; sysOrder=data.sysOrder||{}; systemsRegistry=data.systemsRegistry||[]; actorsRegistry=data.actorsRegistry||[]; knownSys.clear();
+      if(data.displayConfig){
+        displayConfig.showLevel=data.displayConfig.showLevel!==false;
+        displayConfig.showEventCode=data.displayConfig.showEventCode!==false;
+        displayConfig.showManagedIntegrationCode=data.displayConfig.showManagedIntegrationCode!==false;
+        document.getElementById('dc-level').checked=displayConfig.showLevel;
+        document.getElementById('dc-event-code').checked=displayConfig.showEventCode;
+        document.getElementById('dc-managed-integration-code').checked=displayConfig.showManagedIntegrationCode;
+      }
       events.forEach(function(ev){
         if(ev.system) knownSys.add(ev.system);
         (ev.interactions||[]).forEach(function(i){if(i.target) knownSys.add(i.target);});

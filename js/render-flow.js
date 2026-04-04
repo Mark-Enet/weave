@@ -24,7 +24,8 @@ function renderFlow(parent,direction,showSeq){
   var isLR=direction==='lr';
   var seqOf={}; order.forEach(function(id,i){seqOf[id]=i;});
   var rowOf={}; events.forEach(function(e){rowOf[e._id]=sysArr.indexOf(e.system);});
-  var BW=170,BH=58,LG=isLR?105:210,SG=isLR?215:165;
+  var extraRows=(displayConfig.showEventCode?1:0)+(displayConfig.showManagedIntegrationCode?1:0);
+  var BW=170,BH=58+extraRows*13,LG=isLR?105+extraRows*13:210,SG=isLR?215:165+extraRows*13;
   function bC(id){
     var row=rowOf[id]!==undefined?rowOf[id]:0, seq=seqOf[id]!==undefined?seqOf[id]:0;
     return isLR?{x:seq*SG+BW/2+20,y:row*LG+BH/2+20}:{x:row*SG+BW/2+20,y:seq*LG+BH/2+20};
@@ -194,9 +195,24 @@ function renderFlow(parent,direction,showSeq){
       aT(g,bx+13,c.y+4,String(seqIdx+1),{'text-anchor':'middle','font-size':'10','fill':color,'font-weight':'800','font-family':'DM Mono,monospace'});
     }
     var tx=showSeq?bx+30:bx+9;
-    aT(g,tx,by+17,trunc(ev.system,20),{'font-size':'8','fill':color,'font-family':'DM Mono,monospace','font-weight':'700'});
+    var sysLabel=trunc(ev.system,(displayConfig.showLevel&&ev.level)?14:20);
+    aT(g,tx,by+17,sysLabel,{'font-size':'8','fill':color,'font-family':'DM Mono,monospace','font-weight':'700'});
+    if(displayConfig.showLevel&&ev.level){
+      var lc=levelColor(ev.level);
+      aR(g,bx+BW-34,by+7,28,11,{rx:3,fill:lc,opacity:.18});
+      aT(g,bx+BW-20,by+16,ev.level.toUpperCase(),{'text-anchor':'middle','font-size':'7','fill':lc,'font-family':'DM Mono,monospace','font-weight':'800'});
+    }
     aT(g,tx,by+32,trunc(ev.desc,22),{'font-size':'11','fill':svgColors().listDesc,'font-weight':'600'});
     if(ev.actor) aT(g,tx,by+46,trunc(ev.actor,22),{'font-size':'9','fill':svgColors().listTs});
+    var ey=by+46;
+    if(displayConfig.showEventCode){
+      ey+=13;
+      if(ev.eventCode) aT(g,tx,ey,trunc(ev.eventCode,22),{'font-size':'8','fill':svgColors().listTs,'font-family':'DM Mono,monospace'});
+    }
+    if(displayConfig.showManagedIntegrationCode){
+      ey+=13;
+      if(ev.managedIntegrationCode) aT(g,tx,ey,trunc(ev.managedIntegrationCode,22),{'font-size':'8','fill':svgColors().listInt,'font-family':'DM Mono,monospace'});
+    }
   });
   // legend
   [['push \u2192',svgColors().accent],['pull \u2190',svgColors().teal],['process',svgColors().proc]].forEach(function(item,li){

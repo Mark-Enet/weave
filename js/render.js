@@ -41,6 +41,12 @@ function mkSVG(W,H){
   return svg;
 }
 function scale1d(d0,d1,r0,r1){var f=(d1===d0)?0:(r1-r0)/(d1-d0);return function(v){return r0+(v-d0)*f;};}
+function levelColor(level){
+  if(level==='error') return svgColors().accent;
+  if(level==='warning') return '#f5a623';
+  if(level==='info') return svgColors().teal;
+  return svgColors().label;
+}
 function aT(p,x,y,t,a){var e=sv('text',Object.assign({x:x,y:y},a));e.textContent=t;p.appendChild(e);return e;}
 function aL(p,x1,y1,x2,y2,a){p.appendChild(sv('line',Object.assign({x1:x1,y1:y1,x2:x2,y2:y2},a)));return p;}
 function aC(p,cx,cy,r,a){p.appendChild(sv('circle',Object.assign({cx:cx,cy:cy,r:r},a)));return p;}
@@ -72,11 +78,21 @@ function renderList(parent,sorted){
     var d=document.createElement('div');
     var c=svgColors();d.style.cssText='background:'+c.listBg+';border:1px solid '+c.listBdr+';border-radius:10px;padding:13px 15px;margin-bottom:10px;border-left:3px solid '+c.accent;
     var ts=new Date(e.timestamp).toISOString().slice(0,19).replace('T',' ');
-    var h='<div style="font-family:DM Mono,monospace;font-size:.7rem;color:#b08050;margin-bottom:5px">'+esc(ts)+'</div>'+
-      '<div style="font-size:.93rem;font-weight:600;color:#2c1a0e;margin-bottom:3px">'+esc(e.desc)+'</div>'+
-      '<div style="font-size:.77rem;color:#7a5c3a">'+esc(e.system||'')+(e.actor?' &middot; '+esc(e.actor):'')+'</div>';
+    var levelHtml='';
+    if(displayConfig.showLevel&&e.level){
+      var lc=levelColor(e.level);
+      levelHtml='<span style="display:inline-block;font-family:DM Mono,monospace;font-size:.65rem;font-weight:800;padding:1px 6px;border-radius:4px;background:'+lc+'22;color:'+lc+';margin-left:6px;vertical-align:middle">'+esc(e.level.toUpperCase())+'</span>';
+    }
+    var h='<div style="font-family:DM Mono,monospace;font-size:.7rem;color:'+c.listTs+';margin-bottom:5px">'+esc(ts)+'</div>'+
+      '<div style="font-size:.93rem;font-weight:600;color:'+c.listDesc+';margin-bottom:3px">'+esc(e.desc)+levelHtml+'</div>'+
+      '<div style="font-size:.77rem;color:'+c.listSys+'">'+esc(e.system||'')+(e.actor?' &middot; '+esc(e.actor):'')+'</div>';
+    if(displayConfig.showEventCode&&e.eventCode){
+      h+='<div style="font-family:DM Mono,monospace;font-size:.72rem;color:'+c.listTs+';margin-top:3px">'+esc(e.eventCode)+(displayConfig.showManagedIntegrationCode&&e.managedIntegrationCode?' &middot; '+esc(e.managedIntegrationCode):'')+'</div>';
+    } else if(displayConfig.showManagedIntegrationCode&&e.managedIntegrationCode){
+      h+='<div style="font-family:DM Mono,monospace;font-size:.72rem;color:'+c.listTs+';margin-top:3px">'+esc(e.managedIntegrationCode)+'</div>';
+    }
     if((e.interactions||[]).length){
-      h+='<div style="margin-top:7px;font-size:.78rem;color:#b08050">';
+      h+='<div style="margin-top:7px;font-size:.78rem;color:'+c.listInt+'">';
       e.interactions.forEach(function(i){h+='<span style="margin-right:9px">&rarr; '+esc(i.nature)+' '+esc(i.target)+(i.delay?' +'+i.delay+'ms':'')+'</span>';});
       h+='</div>';
     }

@@ -134,6 +134,20 @@ function renderTimeline(parent,sorted,orientation){
     aC(g,cx,cy,13,{fill:svgColors().nodeFill,stroke:color,'stroke-width':'2.5'});
     aT(g,cx,cy+4,initials(e.actor),{'text-anchor':'middle','font-size':'9','fill':svgColors().actor,'font-weight':'700','font-family':'DM Mono,monospace'});
     aT(g,isH?cx:cx+17,isH?cy+26:cy+4,trunc(e.desc,30),{'text-anchor':isH?'middle':'start','font-size':'11','fill':svgColors().label});
+    if(displayConfig.showLevel&&e.level){
+      var lc=levelColor(e.level);
+      var lx=isH?cx:cx+17, ly=isH?cy+38:cy+17;
+      aT(g,lx,ly,e.level.toUpperCase(),{'text-anchor':isH?'middle':'start','font-size':'8','fill':lc,'font-family':'DM Mono,monospace','font-weight':'700'});
+    }
+    var extraY=isH?cy+38:cy+17;
+    if(displayConfig.showLevel&&e.level) extraY+=12;
+    if(displayConfig.showEventCode&&e.eventCode){
+      aT(g,isH?cx:cx+17,extraY,trunc(e.eventCode,20),{'text-anchor':isH?'middle':'start','font-size':'9','fill':svgColors().listTs,'font-family':'DM Mono,monospace'});
+      extraY+=12;
+    }
+    if(displayConfig.showManagedIntegrationCode&&e.managedIntegrationCode){
+      aT(g,isH?cx:cx+17,extraY,trunc(e.managedIntegrationCode,20),{'text-anchor':isH?'middle':'start','font-size':'9','fill':svgColors().listInt,'font-family':'DM Mono,monospace'});
+    }
   });
   parent.appendChild(svg);
 }
