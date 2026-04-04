@@ -67,7 +67,7 @@ function render(){
     var sorted=[...events].sort(function(a,b){return(a.timestamp||0)-(b.timestamp||0);});
     document.getElementById('view-mode').value==='single'?renderList(ca,sorted):renderTimeline(ca,sorted,document.getElementById('orientation').value);
   }else{
-    renderFlow(ca,document.getElementById('flow-dir').value,document.getElementById('show-seq').checked);
+    renderFlow(ca,document.getElementById('flow-dir').value,displayConfig.showSeq);
   }
 }
 
@@ -85,7 +85,7 @@ function renderList(parent,sorted){
     }
     var h='<div style="font-family:DM Mono,monospace;font-size:.7rem;color:'+c.listTs+';margin-bottom:5px">'+esc(ts)+'</div>'+
       '<div style="font-size:.93rem;font-weight:600;color:'+c.listDesc+';margin-bottom:3px">'+esc(e.desc)+levelHtml+'</div>'+
-      '<div style="font-size:.77rem;color:'+c.listSys+'">'+esc(e.system||'')+(e.actor?' &middot; '+esc(e.actor):'')+'</div>';
+      '<div style="font-size:.77rem;color:'+c.listSys+'">'+esc(e.system||'')+(displayConfig.showActor&&e.actor?' &middot; '+esc(e.actor):'')+'</div>';
     if(displayConfig.showEventCode&&e.eventCode){
       h+='<div style="font-family:DM Mono,monospace;font-size:.72rem;color:'+c.listTs+';margin-top:3px">'+esc(e.eventCode)+(displayConfig.showManagedIntegrationCode&&e.managedIntegrationCode?' &middot; '+esc(e.managedIntegrationCode):'')+'</div>';
     } else if(displayConfig.showManagedIntegrationCode&&e.managedIntegrationCode){

@@ -5,7 +5,7 @@ var sysOrder={}; // { systemName: orderNumber } — lower = earlier in diagram
 var systemsRegistry=[]; // [{name,desc,order}]
 var actorsRegistry=[];  // [{name,desc}]
 var knownSys=new Set();
-var displayConfig={showLevel:true,showEventCode:true,showManagedIntegrationCode:true};
+var displayConfig={showLevel:true,showEventCode:true,showManagedIntegrationCode:true,showActor:true,showDate:true,showSeq:true};
 var COLORS_L=['#e8604a','#3cbfbf','#f5a623','#7755cc','#c04535','#2a9d8f','#e76f51'];
 var COLORS_D=['#f07060','#45d0d0','#f5b030','#8888cc','#e05050','#35b8b8','#f09070'];
 function COLORS_ARR(){return document.documentElement.classList.contains('dark')?COLORS_D:COLORS_L;}

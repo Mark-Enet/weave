@@ -168,6 +168,9 @@
         <label class="tchk"><input type="checkbox" id="dc-level" checked onchange="saveDisplayConfig()"> Event Level</label>
         <label class="tchk"><input type="checkbox" id="dc-event-code" checked onchange="saveDisplayConfig()"> Event Code</label>
         <label class="tchk"><input type="checkbox" id="dc-managed-integration-code" checked onchange="saveDisplayConfig()"> Managed Integration Code</label>
+        <label class="tchk"><input type="checkbox" id="dc-actor" checked onchange="saveDisplayConfig()"> Actor</label>
+        <label class="tchk"><input type="checkbox" id="dc-show-date" checked onchange="saveDisplayConfig()"> Date&nbsp;<span class="hint" style="margin-left:4px">(Timeline)</span></label>
+        <label class="tchk"><input type="checkbox" id="dc-show-seq" checked onchange="saveDisplayConfig()"> Seq #&nbsp;<span class="hint" style="margin-left:4px">(Flow)</span></label>
       </div>
       <div class="sep"></div>
       <div class="sh"><span class="st">System Lane Order</span></div>
@@ -202,7 +205,6 @@
           <option value="vertical">Vertical</option>
           <option value="horizontal">Horizontal</option>
         </select>
-        <label class="tchk"><input type="checkbox" id="show-date" checked onchange="render()"> Date</label>
       </div>
       <div id="fl-ctrl" style="display:none;align-items:center;gap:10px">
         <span class="tlbl">Direction</span>
@@ -210,7 +212,6 @@
           <option value="lr">Left to Right</option>
           <option value="tb">Top to Bottom</option>
         </select>
-        <label class="tchk"><input type="checkbox" id="show-seq" checked onchange="render()"> Seq #</label>
       </div>
     </div>
     <div class="cvport">
