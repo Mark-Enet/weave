@@ -12,18 +12,14 @@ var FDD_KEYS=[
   {key:'integrationCodes', label:'Int. Code'}
 ];
 
+// Maps filter key to the event property name
+var FDD_PROP={systems:'system',actors:'actor',levels:'level',eventCodes:'eventCode',integrationCodes:'managedIntegrationCode'};
+
 // Build option values for each dropdown from current events
 function getFDDOptions(key){
+  var prop=FDD_PROP[key];
   var vals=new Set();
-  events.forEach(function(ev){
-    var v='';
-    if(key==='systems') v=ev.system||'';
-    else if(key==='actors') v=ev.actor||'';
-    else if(key==='levels') v=ev.level||'';
-    else if(key==='eventCodes') v=ev.eventCode||'';
-    else if(key==='integrationCodes') v=ev.managedIntegrationCode||'';
-    if(v) vals.add(v);
-  });
+  events.forEach(function(ev){var v=ev[prop]||''; if(v) vals.add(v);});
   return [...vals].sort();
 }
 
