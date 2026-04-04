@@ -244,9 +244,11 @@ input[type=datetime-local]{color-scheme:var(--datetime-scheme)}
 .elevel-info{background:rgba(60,191,191,.18);color:#2a9d8f;font-weight:700}
 .elevel-warning{background:rgba(245,166,35,.18);color:#c47c00;font-weight:700}
 .elevel-error{background:rgba(232,96,74,.18);color:#e8604a;font-weight:700}
+.elevel-debug{background:rgba(119,136,170,.15);color:#5566aa;font-weight:700}
 html.dark .elevel-info{background:rgba(69,208,208,.15);color:#45d0d0}
 html.dark .elevel-warning{background:rgba(245,176,48,.15);color:#f5b030}
 html.dark .elevel-error{background:rgba(240,112,96,.15);color:#f07060}
+html.dark .elevel-debug{background:rgba(136,153,200,.12);color:#99aacc}
 .eacts{display:flex;gap:5px;margin-top:7px}
 
 /* ── CHART PANE ──────────────────────────────────────── */
