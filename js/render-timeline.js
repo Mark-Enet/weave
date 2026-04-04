@@ -140,9 +140,9 @@ function renderTimeline(parent,sorted,orientation){
       aT(g,lx,ly,e.level.toUpperCase(),{'text-anchor':isH?'middle':'start','font-size':'8','fill':lc,'font-family':'DM Mono,monospace','font-weight':'700'});
     }
     var extraY=isH?cy+38:cy+17;
-    if(displayConfig.showLevel&&e.level) extraY+=isH?12:12;
+    if(displayConfig.showLevel&&e.level) extraY+=12;
     if(displayConfig.showEventCode&&e.eventCode){
-      aT(g,isH?cx:cx+17,extraY+(isH?0:0),trunc(e.eventCode,20),{'text-anchor':isH?'middle':'start','font-size':'9','fill':svgColors().listTs,'font-family':'DM Mono,monospace'});
+      aT(g,isH?cx:cx+17,extraY,trunc(e.eventCode,20),{'text-anchor':isH?'middle':'start','font-size':'9','fill':svgColors().listTs,'font-family':'DM Mono,monospace'});
       extraY+=12;
     }
     if(displayConfig.showManagedIntegrationCode&&e.managedIntegrationCode){
