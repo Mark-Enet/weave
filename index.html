@@ -46,6 +46,29 @@
         <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
       </svg>Export
     </button>
+    <!-- ServiceNow connect button + dropdown -->
+    <div class="sn-banner-wrap">
+      <button class="nav-btn sn-nav-btn" id="sn-banner-btn" onclick="snBannerClick()" title="Connect to ServiceNow">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/>
+        </svg>ServiceNow
+      </button>
+      <div class="sn-menu" id="sn-menu" style="display:none">
+        <button class="sn-menu-item" onclick="switchTab('servicenow');snCloseBannerMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Query &amp; Import
+        </button>
+        <button class="sn-menu-item" onclick="snOpenConfig();snCloseBannerMenu()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          Settings
+        </button>
+        <div class="sn-menu-divider"></div>
+        <button class="sn-menu-item sn-menu-danger" onclick="snLogout()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Disconnect
+        </button>
+      </div>
+    </div>
     <button class="nav-btn" onclick="openAbout()" title="About Weave">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -70,6 +93,7 @@
       <button class="sidebar-tab" id="stab-events" onclick="switchTab('events')">Events</button>
       <button class="sidebar-tab" id="stab-scenario" onclick="switchTab('scenario')">Scenario</button>
       <button class="sidebar-tab" id="stab-systems" onclick="switchTab('systems')">Systems</button>
+      <button class="sidebar-tab" id="stab-servicenow" onclick="switchTab('servicenow')">ServiceNow</button>
     </div>
 
     <div class="sidebar-panel active" id="panel-add">
@@ -189,6 +213,88 @@
         </svg>Clear All Events
       </button>
     </div>
+
+    <!-- ServiceNow sidebar panel -->
+    <div class="sidebar-panel" id="panel-servicenow">
+      <div class="sn-panel-header">
+        <span class="st">ServiceNow</span>
+        <div id="sn-panel-status" class="sn-status-bar">
+          <span class="sn-dot"></span><span class="sn-status-text">Not connected</span>
+        </div>
+      </div>
+
+      <!-- Login prompt (shown when not connected) -->
+      <div id="sn-panel-login">
+        <p class="hint" style="margin-bottom:8px">Connect your ServiceNow instance to query tables and import records as diagram events.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-p" onclick="snOpenConfig()">Configure</button>
+          <button class="btn btn-outline" onclick="snInitLogin()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+            Login with ServiceNow
+          </button>
+        </div>
+      </div>
+
+      <!-- Query form (shown when connected) -->
+      <div id="sn-query-form" style="display:none">
+        <div class="fg">
+          <label class="fl">Table</label>
+          <input type="text" id="sn-table" placeholder="e.g. incident, change_request" autocomplete="off">
+        </div>
+        <div class="fg">
+          <label class="fl">Filter (sysparm_query)</label>
+          <input type="text" id="sn-query" placeholder="e.g. stateIN1,2^priority=1" autocomplete="off">
+          <span class="hint">ServiceNow encoded query string</span>
+        </div>
+        <div class="fg">
+          <label class="fl">Fields (comma-separated, blank = all)</label>
+          <input type="text" id="sn-fields" placeholder="e.g. number,short_description,state" autocomplete="off">
+        </div>
+        <div class="fg">
+          <label class="fl">Max records</label>
+          <input type="number" id="sn-limit" value="20" min="1" max="200" style="width:80px">
+        </div>
+        <div class="sep"></div>
+        <div class="sh"><span class="st" style="font-size:.72rem">Field Mapping</span></div>
+        <span class="hint">Map ServiceNow fields to diagram properties.</span>
+        <div class="mgrid" style="margin-top:4px">
+          <div class="fg">
+            <label class="fl">System field</label>
+            <input type="text" id="sn-sys-field" placeholder="e.g. category" autocomplete="off">
+          </div>
+          <div class="fg">
+            <label class="fl">Actor field</label>
+            <input type="text" id="sn-actor-field" placeholder="e.g. assigned_to" autocomplete="off">
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Timestamp field</label>
+          <input type="text" id="sn-ts-field" placeholder="e.g. opened_at (default: sys_created_on)" autocomplete="off">
+        </div>
+        <div class="btn-row" style="margin-top:4px">
+          <button class="btn btn-p btn-full" onclick="snRunQuery()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Run Query
+          </button>
+        </div>
+        <div class="sep"></div>
+        <div class="sh">
+          <span class="st" style="font-size:.72rem">Results</span>
+          <span id="sn-query-status" class="hint"></span>
+        </div>
+        <button class="btn btn-outline btn-sm btn-full" id="sn-import-all-btn" onclick="snImportAll()" style="display:none;margin-bottom:6px">
+          &#x21E9; Import All to Diagram
+        </button>
+        <div id="sn-results"></div>
+      </div>
+
+      <div class="sep" style="margin-top:auto"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;padding-top:4px">
+        <button class="btn btn-outline btn-sm" onclick="snOpenConfig()">Settings</button>
+        <button class="btn btn-outline btn-sm" onclick="snInitLogin()">Login</button>
+        <button class="btn btn-d btn-sm" onclick="snLogout()">Disconnect</button>
+      </div>
+    </div>
   </aside>
 
   <main class="cpane">
@@ -261,6 +367,39 @@
 </div>
 
 
+<!-- ServiceNow Config Modal -->
+<div class="modal-overlay" id="sn-config-modal">
+  <div class="modal-card sn-config-card" role="dialog" aria-modal="true" aria-label="ServiceNow Connection Settings">
+    <button class="modal-close" onclick="snCloseConfig()" title="Close">&#x2715;</button>
+    <h2 class="about-title" style="font-size:1.15rem;margin-bottom:4px">ServiceNow Connection</h2>
+    <p class="about-sub" style="margin-bottom:18px">OAuth 2.0 &bull; PKCE &bull; No server required</p>
+    <div class="fg" style="text-align:left">
+      <label class="fl">Instance URL</label>
+      <input type="url" id="sn-instance-url" placeholder="https://yourinstance.service-now.com" autocomplete="off" spellcheck="false">
+      <span class="hint">Full URL of your ServiceNow instance</span>
+    </div>
+    <div class="fg" style="text-align:left">
+      <label class="fl">Client ID</label>
+      <input type="text" id="sn-client-id" placeholder="OAuth Application Client ID" autocomplete="off" spellcheck="false">
+      <span class="hint">From the OAuth Application record in ServiceNow (<em>System OAuth &rsaquo; Application Registry</em>)</span>
+    </div>
+    <div class="fg" style="text-align:left">
+      <label class="fl">Scope <span class="hint">(optional)</span></label>
+      <input type="text" id="sn-scope" value="useraccount" autocomplete="off">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;flex-wrap:wrap">
+      <button class="btn btn-outline" onclick="snCloseConfig()">Cancel</button>
+      <button class="btn btn-s" onclick="snSaveConfigUI()">Save</button>
+      <button class="btn btn-p" onclick="snSaveConfigUI();snInitLogin()">Save &amp; Login</button>
+    </div>
+    <p class="hint" style="margin-top:14px;text-align:left">
+      <strong>Setup:</strong> In ServiceNow, create an OAuth Application record with the redirect URI set to this page&rsquo;s URL
+      (<code id="sn-redirect-uri-hint" style="word-break:break-all"></code>).
+      Enable CORS for this origin in <em>System Web Services &rsaquo; REST &rsaquo; CORS Rules</em>.
+    </p>
+  </div>
+</div>
+
 <div class="modal-overlay" id="about-modal">
   <div class="modal-card" role="dialog" aria-modal="true" aria-label="About Weave">
     <button class="modal-close" onclick="closeAbout()" title="Close">&#x2715;</button>
@@ -280,5 +419,7 @@
 <script src="js/import-export.js"></script>
 <script src="js/filter.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/servicenow-auth.js"></script>
+<script>snInit();</script>
 </body>
 </html>
