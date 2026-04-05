@@ -207,7 +207,7 @@ function dsApiGet(path, queryParams) {
     var cfg  = dsLoadConfig();
     var base = cfg.baseUrl.replace(/\/$/, '');
     var url  = base + path;
-    if (queryParams && Object.keys(queryParams).length) {
+    if (queryParams) {
       url += '?' + new URLSearchParams(queryParams).toString();
     }
     return fetch(url, {
@@ -366,7 +366,7 @@ function dsRunQuery() {
       // Support {result:[...]}, {data:[...]}, {records:[...]}, {items:[...]}, or a bare array
       var records = Array.isArray(data)
         ? data
-        : (data.result || data.data || data.records || data.items || [data]);
+        : (data.result || data.data || data.records || data.items || []);
       statusEl.textContent = records.length + ' record(s) returned';
       dsShowResults(records, descField, sysField, actorField, tsField);
     })
