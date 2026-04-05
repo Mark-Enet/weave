@@ -52,8 +52,8 @@ function switchAppMode(m){
 function switchTab(tab){
   if(tab==='scenario') setTimeout(refreshSysOrderUI,50);
   if(tab==='systems') setTimeout(refreshSystemsUI,50);
-  if(tab==='servicenow') setTimeout(snUpdatePanelStatus,50);
-  ['add','events','scenario','systems','servicenow'].forEach(function(t){
+  if(tab==='datasource') setTimeout(dsUpdatePanelStatus,50);
+  ['add','events','scenario','systems','datasource'].forEach(function(t){
     document.getElementById('stab-'+t).classList.toggle('active',t===tab);
     document.getElementById('panel-'+t).classList.toggle('active',t===tab);
   });
