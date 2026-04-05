@@ -97,7 +97,8 @@ function snHandleCallback() {
   if (error) {
     // Validate against known OAuth error codes to avoid reflecting arbitrary input
     var knownErrors = ['access_denied','invalid_request','unauthorized_client',
-      'unsupported_response_type','invalid_scope','server_error','temporarily_unavailable'];
+      'unsupported_response_type','invalid_scope','server_error','temporarily_unavailable',
+      'invalid_grant','unsupported_grant_type','invalid_client'];
     var safeError = knownErrors.indexOf(String(error)) !== -1 ? String(error) : 'unknown_error';
     toast('ServiceNow auth error: ' + safeError, '\u2715');
     history.replaceState(null, '', window.location.pathname);
@@ -234,7 +235,6 @@ function snUpdateBannerBtn() {
   var btn = document.getElementById('sn-banner-btn');
   if (!btn) return;
   var loggedIn = snIsLoggedIn();
-  var cfg = snLoadConfig();
   var label = loggedIn
     ? '<span class="sn-dot connected" title="Connected"></span>ServiceNow'
     : 'ServiceNow';
@@ -243,9 +243,7 @@ function snUpdateBannerBtn() {
     '<rect x="2" y="3" width="20" height="14" rx="2"/>' +
     '<path d="M8 21h8M12 17v4"/></svg>' +
     label;
-  btn.title = loggedIn
-    ? 'Connected to ServiceNow (' + (cfg.instanceUrl || '') + ')'
-    : 'Connect to ServiceNow';
+  btn.title = loggedIn ? 'Connected to ServiceNow' : 'Connect to ServiceNow';
 }
 
 function snBannerClick() {
@@ -445,7 +443,9 @@ function snRecordToEvent(rec, table, sysField, actorField, tsField) {
   var tsRaw   = tsField    ? snGetFieldVal(rec, tsField)    : (snGetFieldVal(rec, 'sys_created_on') || '');
   var tsMs    = null;
   if (tsRaw) {
-    var d = new Date(tsRaw.replace(' ', 'T'));
+    // Handle both 'YYYY-MM-DD HH:MM:SS' (ServiceNow) and ISO 8601 formats
+    var normalized = tsRaw.replace(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})/, '$1T$2');
+    var d = new Date(normalized);
     if (!isNaN(d.getTime())) tsMs = d.getTime();
   }
   var ev = {
