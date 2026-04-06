@@ -88,7 +88,7 @@ function renderTimeline(parent,sorted,orientation){
     (e.interactions||[]).forEach(function(i){intMaxT=Math.max(intMaxT,e.timestamp+(i.delay||0));});
   });
   if(minT===maxT) maxT=minT+60000;
-  var LANE=isH?110:150, mg={top:65,right:80,bottom:65,left:165};
+  var LANE=isH?140:185, mg={top:80,right:100,bottom:80,left:195};
   var basePlotW=isH?Math.max(1200,N*LANE*2):N*LANE, basePlotH=isH?N*LANE:Math.max(600,sorted.length*100);
 
   // Ensure intMaxT is never less than maxT (maxT may have been bumped above by
@@ -97,10 +97,10 @@ function renderTimeline(parent,sorted,orientation){
   if(intMaxT<maxT) intMaxT=maxT;
 
   // EH — event height in pixels: visual footprint of one event node.
-  // Vertical: circle (r=13) + all label text below ~100 px (prevents overlap when
+  // Vertical: circle (r=17) + all label text below ~130 px (prevents overlap when
   //   all optional fields are shown: desc, level, eventCode, managedIntegrationCode).
-  // Horizontal: needs wider clearance for text labels alongside the axis ~150 px.
-  var EH=isH?150:100;
+  // Horizontal: needs wider clearance for text labels alongside the axis ~200 px.
+  var EH=isH?200:130;
 
   // Compute minimum non-zero time gap between same-system events (used for scale
   // proportioning) and build a stack-index map for simultaneous same-system events.
@@ -183,16 +183,16 @@ function renderTimeline(parent,sorted,orientation){
     tsSeen[e.timestamp]=true;
     var sp=sc(e.timestamp), lbl=fmtTs(e.timestamp,showDate);
     if(isH){aL(g,sp,0,sp,plotH,{stroke:svgColors().grid,'stroke-width':1,'stroke-dasharray':'4,4'});
-      aT(g,sp,plotH+16,lbl,{'text-anchor':'middle','font-size':'10','fill':svgColors().label,'font-family':'DM Mono,monospace'});}
+      aT(g,sp,plotH+20,lbl,{'text-anchor':'middle','font-size':'13','fill':svgColors().label,'font-family':'DM Mono,monospace'});}
     else{aL(g,0,sp,plotW,sp,{stroke:svgColors().grid,'stroke-width':1,'stroke-dasharray':'4,4'});
-      aT(g,-8,sp,lbl,{'text-anchor':'end','dominant-baseline':'middle','font-size':'10','fill':svgColors().label,'font-family':'DM Mono,monospace'});}
+      aT(g,-10,sp,lbl,{'text-anchor':'end','dominant-baseline':'middle','font-size':'13','fill':svgColors().label,'font-family':'DM Mono,monospace'});}
   });
   // lanes
   sysArr.forEach(function(sys,i){
     var pos=lp(i);
     if(i%2===0) aR(g,isH?-mg.left:pos-LANE/2,isH?pos-LANE/2:-mg.top,isH?plotW+mg.left+mg.right:LANE,isH?LANE:plotH+mg.top+mg.bottom,{fill:svgColors().laneAlt});
-    if(isH){aT(g,-8,pos,sys,{'text-anchor':'end','dominant-baseline':'middle','font-weight':'600','font-size':'12','fill':svgColors().label});}
-    else{aT(g,pos,-16,sys,{'text-anchor':'middle','font-weight':'600','font-size':'12','fill':svgColors().label});}
+    if(isH){aT(g,-10,pos,sys,{'text-anchor':'end','dominant-baseline':'middle','font-weight':'600','font-size':'15','fill':svgColors().label});}
+    else{aT(g,pos,-20,sys,{'text-anchor':'middle','font-weight':'600','font-size':'15','fill':svgColors().label});}
     if(isH) aL(g,0,pos,plotW,pos,{stroke:svgColors().grid,'stroke-width':1});
     else     aL(g,pos,0,pos,plotH,{stroke:svgColors().grid,'stroke-width':1});
   });
@@ -209,7 +209,7 @@ function renderTimeline(parent,sorted,orientation){
         // Label centred in the stripe
         aT(g,mid,plotH/2,fmtDuration(bp.gapMs),{
           'text-anchor':'middle','dominant-baseline':'middle',
-          'font-size':'9','fill':'#888','font-family':'DM Mono,monospace',
+          'font-size':'11','fill':'#888','font-family':'DM Mono,monospace',
           'transform':'rotate(-90,'+mid+','+(plotH/2)+')'
         });
       } else {
@@ -217,15 +217,15 @@ function renderTimeline(parent,sorted,orientation){
         aR(g,-mg.left,bp.v0,plotW+mg.left+mg.right,bp.v1-bp.v0,{fill:'rgba(128,128,128,0.08)'});
         aR(g,0,bp.v0,plotW,bp.v1-bp.v0,{fill:'rgba(128,128,128,0.15)',stroke:'rgba(128,128,128,0.25)','stroke-width':1});
         // Label centred in the stripe
-        aT(g,plotW/2,mid+4,fmtDuration(bp.gapMs),{
-          'text-anchor':'middle','font-size':'9','fill':'#888','font-family':'DM Mono,monospace'
+        aT(g,plotW/2,mid+5,fmtDuration(bp.gapMs),{
+          'text-anchor':'middle','font-size':'11','fill':'#888','font-family':'DM Mono,monospace'
         });
       }
     });
   }
 
   // interactions (drawn under nodes, sorted by order)
-  var NODE_R=13, ARROW_OFFSET=8;
+  var NODE_R=17, ARROW_OFFSET=10;
 
   // 1. Collect all arrows
   var arrows=[];
@@ -302,33 +302,33 @@ function renderTimeline(parent,sorted,orientation){
     mEnd=ar.nature==='process'?'':'url(#arr-'+ar.nature+'-'+rid+')';
 
     aL(g,x1,y1,x2,y2,{stroke:ar.color,'stroke-width':2,'stroke-dasharray':ar.nature==='process'?'5,3':'','marker-end':mEnd});
-    var mx=(x1+x2)/2+(isH?0:5), my=(y1+y2)/2-14;
-    aT(g,mx,my,ar.label,{'text-anchor':'middle','font-size':'9','fill':ar.color,'font-family':'DM Mono,monospace'});
+    var mx=(x1+x2)/2+(isH?0:5), my=(y1+y2)/2-18;
+    aT(g,mx,my,ar.label,{'text-anchor':'middle','font-size':'11','fill':ar.color,'font-family':'DM Mono,monospace'});
     var bmx=(x1+x2)/2, bmy=(y1+y2)/2;
-    aC(g,bmx,bmy,9,{fill:ar.color,opacity:.9});
-    aT(g,bmx,bmy+4,String(ar.seqIdx+1),{'text-anchor':'middle','font-size':'8','fill':'#fff','font-weight':'800','font-family':'DM Mono,monospace'});
+    aC(g,bmx,bmy,11,{fill:ar.color,opacity:.9});
+    aT(g,bmx,bmy+5,String(ar.seqIdx+1),{'text-anchor':'middle','font-size':'10','fill':'#fff','font-weight':'800','font-family':'DM Mono,monospace'});
   });
 
   // nodes
   sorted.forEach(function(e){
     var si=sysArr.indexOf(e.system), tp=evPos(e), bp=lp(si);
     var cx=isH?tp:bp, cy=isH?bp:tp, color=COLORS_ARR()[si%COLORS_ARR().length];
-    aC(g,cx,cy,13,{fill:svgColors().nodeFill,stroke:color,'stroke-width':'2.5'});
-    if(displayConfig.showActor&&e.actor) aT(g,cx,cy+4,initials(e.actor),{'text-anchor':'middle','font-size':'9','fill':svgColors().actor,'font-weight':'700','font-family':'DM Mono,monospace'});
-    aT(g,isH?cx:cx+17,isH?cy+26:cy+4,trunc(e.desc,30),{'text-anchor':isH?'middle':'start','font-size':'11','fill':svgColors().label});
+    aC(g,cx,cy,17,{fill:svgColors().nodeFill,stroke:color,'stroke-width':'2.5'});
+    if(displayConfig.showActor&&e.actor) aT(g,cx,cy+5,initials(e.actor),{'text-anchor':'middle','font-size':'12','fill':svgColors().actor,'font-weight':'700','font-family':'DM Mono,monospace'});
+    aT(g,isH?cx:cx+21,isH?cy+34:cy+5,trunc(e.desc,30),{'text-anchor':isH?'middle':'start','font-size':'14','fill':svgColors().label});
     if(displayConfig.showLevel&&e.level){
       var lc=levelColor(e.level);
-      var lx=isH?cx:cx+17, ly=isH?cy+38:cy+17;
-      aT(g,lx,ly,e.level.toUpperCase(),{'text-anchor':isH?'middle':'start','font-size':'8','fill':lc,'font-family':'DM Mono,monospace','font-weight':'700'});
+      var lx=isH?cx:cx+21, ly=isH?cy+50:cy+21;
+      aT(g,lx,ly,e.level.toUpperCase(),{'text-anchor':isH?'middle':'start','font-size':'12','fill':lc,'font-family':'DM Mono,monospace','font-weight':'700'});
     }
-    var extraY=isH?cy+38:cy+17;
-    if(displayConfig.showLevel&&e.level) extraY+=12;
+    var extraY=isH?cy+50:cy+21;
+    if(displayConfig.showLevel&&e.level) extraY+=16;
     if(displayConfig.showEventCode&&e.eventCode){
-      aT(g,isH?cx:cx+17,extraY,trunc(e.eventCode,20),{'text-anchor':isH?'middle':'start','font-size':'9','fill':svgColors().listTs,'font-family':'DM Mono,monospace'});
-      extraY+=12;
+      aT(g,isH?cx:cx+21,extraY,trunc(e.eventCode,20),{'text-anchor':isH?'middle':'start','font-size':'12','fill':svgColors().listTs,'font-family':'DM Mono,monospace'});
+      extraY+=16;
     }
     if(displayConfig.showManagedIntegrationCode&&e.managedIntegrationCode){
-      aT(g,isH?cx:cx+17,extraY,trunc(e.managedIntegrationCode,20),{'text-anchor':isH?'middle':'start','font-size':'9','fill':svgColors().listInt,'font-family':'DM Mono,monospace'});
+      aT(g,isH?cx:cx+21,extraY,trunc(e.managedIntegrationCode,20),{'text-anchor':isH?'middle':'start','font-size':'12','fill':svgColors().listInt,'font-family':'DM Mono,monospace'});
     }
   });
   parent.appendChild(svg);
