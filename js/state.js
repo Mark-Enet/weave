@@ -5,6 +5,7 @@ var timelineCompact = true;
 var sysOrder={}; // { systemName: orderNumber } — lower = earlier in diagram
 var systemsRegistry=[]; // [{name,desc,order}]
 var actorsRegistry=[];  // [{name,desc}]
+var levelsRegistry=['debug','info','warning','error']; // known event levels
 var knownSys=new Set();
 var displayConfig={showLevel:true,showEventCode:true,showManagedIntegrationCode:true,showActor:true,showDate:true,showSeq:true};
 var filterConfig={text:'',systems:[],actors:[],levels:[],eventCodes:[],integrationCodes:[]};

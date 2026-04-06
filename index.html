@@ -114,13 +114,8 @@
       </div>
       <div class="fg">
         <label class="fl">Event Level</label>
-        <select id="event-level">
-          <option value="">— None —</option>
-          <option value="debug">Debug</option>
-          <option value="info">Info</option>
-          <option value="warning">Warning</option>
-          <option value="error">Error</option>
-        </select>
+        <input type="text" id="event-level" list="level-dl" placeholder="e.g. info, error…" autocomplete="off">
+        <datalist id="level-dl"></datalist>
       </div>
       <div class="mgrid">
         <div class="fg">

@@ -1,6 +1,6 @@
 // IMPORT / EXPORT
 function exportData(){
-  var data={version:3,appMode:appMode,scenarioName:scenName,scenarioDesc:scenDesc,sysOrder:sysOrder,systemsRegistry:systemsRegistry,actorsRegistry:actorsRegistry,
+  var data={version:3,appMode:appMode,scenarioName:scenName,scenarioDesc:scenDesc,sysOrder:sysOrder,systemsRegistry:systemsRegistry,actorsRegistry:actorsRegistry,levelsRegistry:levelsRegistry,
     displayConfig:displayConfig,
     settings:{viewMode:document.getElementById('view-mode').value,
               orientation:document.getElementById('orientation').value,
@@ -29,6 +29,11 @@ function importData(e){
         document.getElementById('flow-dir').value=data.settings.flowDirection||'lr';
       }
       events=data.events||[]; sysOrder=data.sysOrder||{}; systemsRegistry=data.systemsRegistry||[]; actorsRegistry=data.actorsRegistry||[]; knownSys.clear();
+      // Restore levels registry; fall back to defaults if not present
+      var baseLevels=['debug','info','warning','error'];
+      levelsRegistry=data.levelsRegistry&&data.levelsRegistry.length?data.levelsRegistry.slice():baseLevels.slice();
+      // Add any level values from events that aren't already in the registry
+      events.forEach(function(ev){if(ev.level&&levelsRegistry.indexOf(ev.level)===-1) levelsRegistry.push(ev.level);});
       if(data.displayConfig){
         displayConfig.showLevel=data.displayConfig.showLevel!==false;
         displayConfig.showEventCode=data.displayConfig.showEventCode!==false;
@@ -52,7 +57,7 @@ function importData(e){
         if(ev.system) knownSys.add(ev.system);
         (ev.interactions||[]).forEach(function(i){if(i.target) knownSys.add(i.target);});
       });
-      refreshDL(); clearFilters(); render(); updateList(); toast('Imported','\u2191');
+      refreshDL(); refreshLevelDL(); clearFilters(); render(); updateList(); toast('Imported','\u2191');
     }catch(err){toast('Invalid file','X');}
   };
   reader.readAsText(file); e.target.value='';
