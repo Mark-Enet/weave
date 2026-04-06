@@ -215,11 +215,5 @@ function renderFlow(parent,direction,showSeq,filteredEvents){
       if(ev.managedIntegrationCode) aT(g,tx,ey,trunc(ev.managedIntegrationCode,22),{'font-size':'8','fill':svgColors().listInt,'font-family':'DM Mono,monospace'});
     }
   });
-  // legend
-  [['push \u2192',svgColors().accent],['pull \u2190',svgColors().teal],['process',svgColors().proc]].forEach(function(item,li){
-    var lx=pW-120, ly=-50+li*16;
-    aL(g,lx,ly+5,lx+18,ly+5,{stroke:item[1],'stroke-width':2});
-    aT(g,lx+22,ly+9,item[0],{'font-size':'10','fill':svgColors().label,'font-family':'DM Mono,monospace'});
-  });
   parent.appendChild(svg);
 }

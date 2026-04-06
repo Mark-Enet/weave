@@ -28,6 +28,33 @@ function applyStoredTheme(){
 }
 
 
+// LEGEND TOGGLE
+function updateLegendColors(){
+  var c=svgColors();
+  var lp=document.getElementById('leg-push');
+  var ll=document.getElementById('leg-pull');
+  var lc=document.getElementById('leg-proc');
+  if(lp) lp.style.borderColor=c.accent;
+  if(ll) ll.style.borderColor=c.teal;
+  if(lc) lc.style.borderColor=c.proc;
+}
+function toggleLegend(){
+  var leg=document.getElementById('diagram-legend');
+  var btn=document.getElementById('legend-toggle-btn');
+  var hidden=leg.classList.toggle('legend-hidden');
+  btn.classList.toggle('active',!hidden);
+  localStorage.setItem('weave-legend-hidden',hidden?'1':'0');
+}
+function initLegend(){
+  var hidden=localStorage.getItem('weave-legend-hidden')==='1';
+  var leg=document.getElementById('diagram-legend');
+  var btn=document.getElementById('legend-toggle-btn');
+  leg.classList.toggle('legend-hidden',hidden);
+  btn.classList.toggle('active',!hidden);
+  updateLegendColors();
+}
+
+
 // MODE SWITCH
 function switchAppMode(m){
   appMode=m;
@@ -459,6 +486,7 @@ function refreshActorDL(){
 document.addEventListener('DOMContentLoaded',function(){
   applyStoredTheme();
   switchAppMode('timeline'); refreshDL(); refreshActorDL(); updateList(); render();
+  initLegend();
   document.getElementById('dc-level').checked=displayConfig.showLevel;
   document.getElementById('dc-event-code').checked=displayConfig.showEventCode;
   document.getElementById('dc-managed-integration-code').checked=displayConfig.showManagedIntegrationCode;

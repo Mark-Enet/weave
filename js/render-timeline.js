@@ -152,12 +152,6 @@ function renderTimeline(parent,sorted,orientation){
       }
     });
   }
-  // legend
-  [['push \u2192',svgColors().accent],['pull \u2190',svgColors().teal],['process',svgColors().proc]].forEach(function(item,li){
-    var lx=plotW-130, ly=-40+li*16;
-    aL(g,lx,ly+5,lx+18,ly+5,{stroke:item[1],'stroke-width':2});
-    aT(g,lx+22,ly+9,item[0],{'font-size':'10','fill':svgColors().label,'font-family':'DM Mono,monospace'});
-  });
 
   // interactions (drawn under nodes, sorted by order)
   var NODE_R=13, ARROW_OFFSET=8;
