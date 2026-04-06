@@ -317,21 +317,28 @@ function renderTimeline(parent,sorted,orientation){
     var si=sysArr.indexOf(e.system), tp=evPos(e), bp=lp(si);
     var cx=isH?tp:bp, cy=isH?bp:tp, color=COLORS_ARR()[si%COLORS_ARR().length];
     aC(g,cx,cy,17,{fill:svgColors().nodeFill,stroke:color,'stroke-width':'2.5'});
-    if(displayConfig.showActor&&e.actor) aT(g,cx,cy+5,initials(e.actor),{'text-anchor':'middle','font-size':'12','fill':svgColors().actor,'font-weight':'700','font-family':'DM Mono,monospace'});
-    aT(g,isH?cx:cx+21,isH?cy+34:cy+5,trunc(e.desc,30),{'text-anchor':isH?'middle':'start','font-size':'14','fill':svgColors().label});
-    if(displayConfig.showLevel&&e.level){
-      var lc=levelColor(e.level);
-      var lx=isH?cx:cx+21, ly=isH?cy+50:cy+21;
-      aT(g,lx,ly,e.level.toUpperCase(),{'text-anchor':isH?'middle':'start','font-size':'12','fill':lc,'font-family':'DM Mono,monospace','font-weight':'700'});
+    // Level initial inside circle (initial letter + level color)
+    var lc=e.level?levelColor(e.level):null;
+    if(lc) aT(g,cx,cy+5,e.level.charAt(0).toUpperCase(),{'text-anchor':'middle','font-size':'12','fill':lc,'font-weight':'700','font-family':'DM Mono,monospace'});
+    // Text labels below/beside node
+    var textX=isH?cx:cx+21, textAnchor=isH?'middle':'start';
+    var textY=isH?cy+34:cy+5;
+    aT(g,textX,textY,trunc(e.desc,30),{'text-anchor':textAnchor,'font-size':'14','fill':svgColors().label});
+    textY+=16;
+    if(displayConfig.showActor&&e.actor){
+      aT(g,textX,textY,trunc(e.actor,25),{'text-anchor':textAnchor,'font-size':'12','fill':svgColors().actor,'font-family':'DM Mono,monospace'});
+      textY+=16;
     }
-    var extraY=isH?cy+50:cy+21;
-    if(displayConfig.showLevel&&e.level) extraY+=16;
+    if(displayConfig.showLevel&&lc){
+      aT(g,textX,textY,e.level.toUpperCase(),{'text-anchor':textAnchor,'font-size':'12','fill':lc,'font-family':'DM Mono,monospace','font-weight':'700'});
+      textY+=16;
+    }
     if(displayConfig.showEventCode&&e.eventCode){
-      aT(g,isH?cx:cx+21,extraY,trunc(e.eventCode,20),{'text-anchor':isH?'middle':'start','font-size':'12','fill':svgColors().listTs,'font-family':'DM Mono,monospace'});
-      extraY+=16;
+      aT(g,textX,textY,trunc(e.eventCode,20),{'text-anchor':textAnchor,'font-size':'12','fill':svgColors().listTs,'font-family':'DM Mono,monospace'});
+      textY+=16;
     }
     if(displayConfig.showManagedIntegrationCode&&e.managedIntegrationCode){
-      aT(g,isH?cx:cx+21,extraY,trunc(e.managedIntegrationCode,20),{'text-anchor':isH?'middle':'start','font-size':'12','fill':svgColors().listInt,'font-family':'DM Mono,monospace'});
+      aT(g,textX,textY,trunc(e.managedIntegrationCode,20),{'text-anchor':textAnchor,'font-size':'12','fill':svgColors().listInt,'font-family':'DM Mono,monospace'});
     }
   });
   parent.appendChild(svg);
