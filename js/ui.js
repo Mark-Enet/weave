@@ -36,6 +36,7 @@ function switchAppMode(m){
   document.getElementById('ts-fg').classList.toggle('hidden',m==='flow');
   document.getElementById('tl-ctrl').style.display=m==='timeline'?'flex':'none';
   document.getElementById('fl-ctrl').style.display=m==='flow'?'flex':'none';
+  updateCompactBtn();
   document.getElementById('mode-badge').innerHTML=m==='timeline'
     ?'<span class="mind tl"><span class="mdot"></span>Timeline</span>'
     :'<span class="mind fl"><span class="mdot"></span>Causal Flow</span>';
@@ -48,7 +49,22 @@ function switchAppMode(m){
   render();
 }
 
-// SIDEBAR TABS
+// COMPACT TIMELINE TOGGLE
+function toggleTimelineCompact(){
+  timelineCompact=!timelineCompact;
+  localStorage.setItem('weave-timeline-compact',timelineCompact?'true':'false');
+  updateCompactBtn();
+  render();
+}
+function updateCompactBtn(){
+  var btn=document.getElementById('tl-compact-btn'); if(!btn) return;
+  btn.textContent=timelineCompact?'Normal':'Compact';
+  btn.classList.toggle('filter-toggle-active',timelineCompact);
+  // Only relevant for multi-lane timeline view
+  var vm=document.getElementById('view-mode');
+  btn.style.display=(vm&&vm.value==='multi')?'':'none';
+}
+
 function switchTab(tab){
   if(tab==='scenario') setTimeout(refreshSysOrderUI,50);
   if(tab==='systems') setTimeout(refreshSystemsUI,50);
