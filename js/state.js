@@ -1,5 +1,5 @@
 // ── STATE ───────────────────────────────────────────────
-var APP_VERSION = '2026.04.06.154857';
+var APP_VERSION = '2026.04.06.171904';
 var events=[], editIdx=-1, iCount=0, scenName='', scenDesc='', appMode='timeline';
 var timelineCompact = localStorage.getItem('weave-timeline-compact') === 'true';
 var sysOrder={}; // { systemName: orderNumber } — lower = earlier in diagram
