@@ -1,3 +1,78 @@
+// ── COMPACT TIMELINE SCALE ──────────────────────────────
+// Visual pixels allocated to each compressed (large) gap.
+var COMPACT_GAP_PX = 40;
+
+// Format a duration (ms) into a human-readable compressed-gap label.
+function fmtDuration(ms){
+  if(ms<60000)       return Math.round(ms/1000)+'s compressed';
+  if(ms<3600000)     return parseFloat((ms/60000).toFixed(1))+'m compressed';
+  if(ms<86400000)    return parseFloat((ms/3600000).toFixed(1))+'h compressed';
+  return parseFloat((ms/86400000).toFixed(1))+'d compressed';
+}
+
+// Build a compact (non-linear) 1-D scale from timestamps to visual range [r0,r1].
+// Gaps significantly larger than average are compressed to COMPACT_GAP_PX.
+// Returns a function sc(t) -> visual position, with sc._breakpoints for drawing.
+function buildCompactScale(allTs, r0, r1){
+  var n=allTs.length;
+  if(n<=1){
+    var sc=scale1d(allTs[0]||0,(allTs[0]||0)+60000,r0,r1);
+    sc._breakpoints=null; return sc;
+  }
+
+  // Compute consecutive gaps
+  var gaps=[];
+  for(var i=1;i<n;i++) gaps.push(allTs[i]-allTs[i-1]);
+
+  var avgGap=gaps.reduce(function(a,b){return a+b;},0)/gaps.length;
+  // A gap must be both > 3× the average AND > 5 minutes to be compressed.
+  var threshold=Math.max(avgGap*3, 300000);
+  var largeMask=gaps.map(function(g){return g>threshold;});
+  var numLarge=largeMask.filter(Boolean).length;
+
+  if(numLarge===0){
+    // No large gaps — fall back to linear scale
+    var sc=scale1d(allTs[0],allTs[n-1],r0,r1);
+    sc._breakpoints=null; return sc;
+  }
+
+  // Total visual space split between compressed stubs and normal proportional segments
+  var normalMs=0;
+  gaps.forEach(function(g,i){if(!largeMask[i]) normalMs+=g;});
+  var totalPx=r1-r0;
+  var compressedPx=numLarge*COMPACT_GAP_PX;
+  var normalPx=Math.max(0,totalPx-compressedPx);
+
+  // Build breakpoints [{t0,t1,v0,v1,compressed,gapMs}]
+  var breakpoints=[], curV=r0;
+  for(var i=0;i<n-1;i++){
+    var g=gaps[i], segPx;
+    if(largeMask[i]){
+      segPx=COMPACT_GAP_PX;
+    } else {
+      segPx=normalMs>0?(g/normalMs)*normalPx:normalPx/Math.max(1,gaps.length-numLarge);
+    }
+    breakpoints.push({t0:allTs[i],t1:allTs[i+1],v0:curV,v1:curV+segPx,compressed:largeMask[i],gapMs:g});
+    curV+=segPx;
+  }
+
+  // Scale function — linearly interpolates within each breakpoint segment
+  function compactScale(t){
+    if(t<=allTs[0]) return r0;
+    if(t>=allTs[n-1]) return curV;
+    for(var i=0;i<breakpoints.length;i++){
+      var bp=breakpoints[i];
+      if(t>=bp.t0&&t<=bp.t1){
+        if(bp.t1===bp.t0) return bp.v0;
+        return bp.v0+(t-bp.t0)/(bp.t1-bp.t0)*(bp.v1-bp.v0);
+      }
+    }
+    return curV;
+  }
+  compactScale._breakpoints=breakpoints;
+  return compactScale;
+}
+
 // ── TIMELINE MULTI-LANE ──────────────────────────────
 function renderTimeline(parent,sorted,orientation){
   var sySet=new Set();
@@ -12,7 +87,23 @@ function renderTimeline(parent,sorted,orientation){
   var LANE=isH?110:150, mg={top:65,right:80,bottom:65,left:165};
   var plotW=isH?Math.max(1200,N*LANE*2):N*LANE, plotH=isH?N*LANE:Math.max(600,sorted.length*100);
   var W=plotW+mg.left+mg.right, H=plotH+mg.top+mg.bottom;
-  var sc=scale1d(minT,maxT,0,isH?plotW:plotH);
+
+  // Build scale — compact or linear depending on user preference
+  var sc;
+  if(timelineCompact){
+    // Collect all timestamps (events + interaction destinations) as anchor points
+    var tsSet={};
+    tsSet[minT]=true; tsSet[maxT]=true;
+    sorted.forEach(function(e){
+      tsSet[e.timestamp]=true;
+      (e.interactions||[]).forEach(function(i){tsSet[e.timestamp+(i.delay||0)]=true;});
+    });
+    var allTs=Object.keys(tsSet).map(Number).sort(function(a,b){return a-b;});
+    sc=buildCompactScale(allTs,0,isH?plotW:plotH);
+  } else {
+    sc=scale1d(minT,maxT,0,isH?plotW:plotH);
+    sc._breakpoints=null;
+  }
   function lp(i){return i*LANE+LANE/2;}
   var svg=mkSVG(W,H), rid=svg._rid, g=sv('g',{transform:'translate('+mg.left+','+mg.top+')'});
   svg.appendChild(g);
@@ -34,6 +125,34 @@ function renderTimeline(parent,sorted,orientation){
     if(isH) aL(g,0,pos,plotW,pos,{stroke:svgColors().grid,'stroke-width':1});
     else     aL(g,pos,0,pos,plotH,{stroke:svgColors().grid,'stroke-width':1});
   });
+  // compressed gap indicators (compact mode only)
+  if(timelineCompact&&sc._breakpoints){
+    var gapC=svgColors().grid, gapStroke='#888'; // subtle gray
+    sc._breakpoints.forEach(function(bp){
+      if(!bp.compressed) return;
+      // Mid-position of the compressed stub
+      var mid=(bp.v0+bp.v1)/2, barH=6, barW=6;
+      if(isH){
+        // Vertical stripe across all lanes
+        aR(g,bp.v0,-mg.top,bp.v1-bp.v0,plotH+mg.top+mg.bottom,{fill:'rgba(128,128,128,0.08)'});
+        aR(g,bp.v0,0,bp.v1-bp.v0,plotH,{fill:'rgba(128,128,128,0.15)',stroke:'rgba(128,128,128,0.25)','stroke-width':1});
+        // Label centred in the stripe
+        aT(g,mid,plotH/2,fmtDuration(bp.gapMs),{
+          'text-anchor':'middle','dominant-baseline':'middle',
+          'font-size':'9','fill':'#888','font-family':'DM Mono,monospace',
+          'transform':'rotate(-90,'+mid+','+(plotH/2)+')'
+        });
+      } else {
+        // Horizontal stripe across all lanes
+        aR(g,-mg.left,bp.v0,plotW+mg.left+mg.right,bp.v1-bp.v0,{fill:'rgba(128,128,128,0.08)'});
+        aR(g,0,bp.v0,plotW,bp.v1-bp.v0,{fill:'rgba(128,128,128,0.15)',stroke:'rgba(128,128,128,0.25)','stroke-width':1});
+        // Label centred in the stripe
+        aT(g,plotW/2,mid+4,fmtDuration(bp.gapMs),{
+          'text-anchor':'middle','font-size':'9','fill':'#888','font-family':'DM Mono,monospace'
+        });
+      }
+    });
+  }
   // legend
   [['push \u2192',svgColors().accent],['pull \u2190',svgColors().teal],['process',svgColors().proc]].forEach(function(item,li){
     var lx=plotW-130, ly=-40+li*16;
