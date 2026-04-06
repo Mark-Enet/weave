@@ -491,6 +491,76 @@ function dsRecordToEvent(rec, descField, sysField, actorField, tsField) {
   updateList();
 }
 
+// ── CONFIG IMPORT / EXPORT ─────────────────────────────────────────────────
+function dsExportConfig() {
+  var cfg = dsLoadConfig();
+  if (!cfg.baseUrl && !cfg.clientId) {
+    toast('No data source configuration to export', '!');
+    return;
+  }
+  var exportObj = {
+    weaveDsConfig: true,
+    label:     cfg.label     || '',
+    baseUrl:   cfg.baseUrl   || '',
+    clientId:  cfg.clientId  || '',
+    scope:     cfg.scope     || '',
+    authPath:  cfg.authPath  || '/oauth_auth.do',
+    tokenPath: cfg.tokenPath || '/oauth_token.do'
+  };
+  var blob = new Blob([JSON.stringify(exportObj, null, 2)], {type: 'application/json'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'weave-ds-config.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Config exported', '\u2193');
+}
+
+function dsImportConfigClick() {
+  document.getElementById('ds-config-file').click();
+}
+
+function dsImportConfigFile(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var data = JSON.parse(ev.target.result);
+      if (!data.weaveDsConfig) {
+        toast('Not a valid Weave data source config file', '\u2715');
+        return;
+      }
+      if (!data.baseUrl || !data.clientId) {
+        toast('Config file is missing Base URL or Client ID', '!');
+        return;
+      }
+      dsSaveConfig({
+        label:     data.label     || '',
+        baseUrl:   data.baseUrl,
+        clientId:  data.clientId,
+        scope:     data.scope     || '',
+        authPath:  data.authPath  || '/oauth_auth.do',
+        tokenPath: data.tokenPath || '/oauth_token.do'
+      });
+      // Populate the modal fields so the user can see the imported values
+      document.getElementById('ds-label').value      = data.label     || '';
+      document.getElementById('ds-base-url').value   = data.baseUrl;
+      document.getElementById('ds-client-id').value  = data.clientId;
+      document.getElementById('ds-scope').value      = data.scope     || '';
+      document.getElementById('ds-auth-path').value  = data.authPath  || '/oauth_auth.do';
+      document.getElementById('ds-token-path').value = data.tokenPath || '/oauth_token.do';
+      dsUpdateBannerBtn();
+      toast('Config imported', '\u2191');
+    } catch(err) {
+      toast('Invalid config file', '\u2715');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
 // ── INIT ───────────────────────────────────────────────────────────────────
 function dsInit() {
   // Close menu when clicking outside
