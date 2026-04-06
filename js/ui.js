@@ -223,9 +223,10 @@ function saveEvent(){
     managedIntegrationCode:(document.getElementById('managed-integration-code').value||'').trim()||null,
     timestamp:ts,timestampStr:tsStr,interactions:ints,mode:appMode
   };
+  if(ev.level&&levelsRegistry.indexOf(ev.level)===-1) levelsRegistry.push(ev.level);
   if(editIdx>=0){events[editIdx]=ev;toast('Event updated','\u270f');}
   else{events.push(ev);toast('Event saved','\u2713');}
-  refreshDL(); clearForm(); render(); updateList(); refreshFilterBar();
+  refreshDL(); clearForm(); render(); updateList(); refreshFilterBar(); refreshLevelDL();
 }
 function editEvent(idx){
   var e=events[idx]; editIdx=idx; switchTab('add');
@@ -465,10 +466,16 @@ function refreshActorDL(){
   dl.innerHTML='';
   actorsRegistry.forEach(function(a){var o=document.createElement('option');o.value=a.name;dl.appendChild(o);});
 }
+function refreshLevelDL(){
+  var dl=document.getElementById('level-dl');
+  if(!dl) return;
+  dl.innerHTML='';
+  levelsRegistry.forEach(function(l){var o=document.createElement('option');o.value=l;dl.appendChild(o);});
+}
 // INIT
 document.addEventListener('DOMContentLoaded',function(){
   applyStoredTheme();
-  switchAppMode('timeline'); refreshDL(); refreshActorDL(); updateList(); render();
+  switchAppMode('timeline'); refreshDL(); refreshActorDL(); refreshLevelDL(); updateList(); render();
   initLegend();
   document.getElementById('dc-level').checked=displayConfig.showLevel;
   document.getElementById('dc-event-code').checked=displayConfig.showEventCode;
