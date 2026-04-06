@@ -403,6 +403,19 @@
       <button class="btn btn-s" onclick="dsSaveConfigUI()">Save</button>
       <button class="btn btn-p" onclick="dsSaveConfigUI();dsInitLogin()">Save &amp; Login</button>
     </div>
+    <div class="sep" style="margin-top:14px"></div>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px">
+      <span class="hint" style="flex:1;margin:0">Backup / Restore:</span>
+      <button class="btn btn-outline btn-sm" onclick="dsExportConfig()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Export Config
+      </button>
+      <button class="btn btn-outline btn-sm" onclick="dsImportConfigClick()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Import Config
+      </button>
+      <input type="file" id="ds-config-file" accept=".json" style="display:none" onchange="dsImportConfigFile(event)">
+    </div>
     <p class="hint" style="margin-top:14px;text-align:left">
       <strong>Setup:</strong> Register an OAuth 2.0 client in your data source with the redirect URI set to this page&rsquo;s URL
       (<code id="ds-redirect-uri-hint" style="word-break:break-all"></code>).
