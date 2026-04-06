@@ -274,6 +274,33 @@
           <label class="fl">Timestamp field</label>
           <input type="text" id="ds-ts-field" placeholder="e.g. created_at" autocomplete="off">
         </div>
+        <div class="mgrid" style="margin-top:4px">
+          <div class="fg">
+            <label class="fl">Event Code field</label>
+            <input type="text" id="ds-event-code-field" placeholder="e.g. event_type" autocomplete="off">
+          </div>
+          <div class="fg">
+            <label class="fl">Level field</label>
+            <input type="text" id="ds-level-field" placeholder="e.g. severity" autocomplete="off">
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Integration Code field</label>
+          <input type="text" id="ds-integration-code-field" placeholder="e.g. integration_id" autocomplete="off">
+        </div>
+        <div class="sep"></div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+          <span class="hint" style="flex:1;margin:0">Query:</span>
+          <button class="btn btn-outline btn-sm" onclick="dsExportQuery()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="dsImportQueryClick()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Import
+          </button>
+          <input type="file" id="ds-query-file" accept=".json" style="display:none" onchange="dsImportQueryFile(event)">
+        </div>
         <div class="sep"></div>
         <div class="sh">
           <span class="st" style="font-size:.72rem">Results</span>
