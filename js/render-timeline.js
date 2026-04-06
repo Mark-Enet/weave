@@ -24,10 +24,9 @@ function buildCompactScale(allTs, r0, r1){
   var gaps=[];
   for(var i=1;i<n;i++) gaps.push(allTs[i]-allTs[i-1]);
 
-  var avgGap=gaps.reduce(function(a,b){return a+b;},0)/gaps.length;
-  // A gap must be both > 3× the average AND > 5 minutes to be compressed.
-  var threshold=Math.max(avgGap*3, 300000);
-  var largeMask=gaps.map(function(g){return g>threshold;});
+  // A gap is compressed if it is >= 10% of the total event span.
+  var threshold=0.10*(allTs[n-1]-allTs[0]);
+  var largeMask=gaps.map(function(g){return g>=threshold;});
   var numLarge=largeMask.filter(Boolean).length;
 
   if(numLarge===0){
@@ -98,6 +97,17 @@ function renderTimeline(parent,sorted,orientation){
   // scale1d/buildCompactScale always receives a non-zero range).
   if(intMaxT<maxT) intMaxT=maxT;
 
+  // Compute minimum time gap (> 0) between events in the same system.
+  // Used below to expand the plot when events would otherwise overlap.
+  var MIN_SEP=isH?200:70;
+  var _syBuckets={};
+  sorted.forEach(function(e){if(!_syBuckets[e.system])_syBuckets[e.system]=[];_syBuckets[e.system].push(e.timestamp);});
+  var minSameSysGap=0;
+  Object.keys(_syBuckets).forEach(function(sys){
+    var ts=_syBuckets[sys].sort(function(a,b){return a-b;});
+    for(var _si=1;_si<ts.length;_si++){var _g=ts[_si]-ts[_si-1];if(_g>0&&(minSameSysGap===0||_g<minSameSysGap))minSameSysGap=_g;}
+  });
+
   // Build scale — compact or linear depending on user preference
   var sc, plotW, plotH;
   if(timelineCompact){
@@ -109,6 +119,25 @@ function renderTimeline(parent,sorted,orientation){
     sorted.forEach(function(e){tsSet[e.timestamp]=true;});
     var allTs=Object.keys(tsSet).map(Number).sort(function(a,b){return a-b;});
     if(intMaxT>allTs[allTs.length-1]) allTs.push(intMaxT);
+    // Expand plot so same-system events are at least MIN_SEP pixels apart.
+    if(minSameSysGap>0){
+      var _cSpan=allTs[allTs.length-1]-allTs[0];
+      var _cThresh=0.10*_cSpan;
+      var _cGaps=[]; for(var _ci=1;_ci<allTs.length;_ci++) _cGaps.push(allTs[_ci]-allTs[_ci-1]);
+      var _cNumLarge=_cGaps.filter(function(g){return g>=_cThresh;}).length;
+      var _cNormalMs=_cGaps.reduce(function(s,g){return s+(g<_cThresh?g:0);},0);
+      var _cCompPx=_cNumLarge*COMPACT_GAP_PX;
+      if(minSameSysGap<_cThresh&&_cNormalMs>0){
+        var _cPlotDim=isH?basePlotW:basePlotH;
+        var _cNormalPx=_cPlotDim-_cCompPx;
+        var _cMinPx=(minSameSysGap/_cNormalMs)*_cNormalPx;
+        if(_cMinPx<MIN_SEP){
+          var _cNeeded=Math.ceil(MIN_SEP*_cNormalMs/minSameSysGap+_cCompPx);
+          if(isH) basePlotW=Math.max(basePlotW,_cNeeded);
+          else basePlotH=Math.max(basePlotH,_cNeeded);
+        }
+      }
+    }
     sc=buildCompactScale(allTs,0,isH?basePlotW:basePlotH);
     plotW=basePlotW; plotH=basePlotH;
   } else {
@@ -117,6 +146,15 @@ function renderTimeline(parent,sorted,orientation){
     // visible — an arrow ending at timestamp+delay appears further along the axis
     // than the source event, with visual distance proportional to the delay.
     var scMax=intMaxT>maxT?intMaxT:maxT;
+    // Expand plot so same-system events are at least MIN_SEP pixels apart.
+    if(minSameSysGap>0){
+      var _lSpan=scMax-minT;
+      if(_lSpan>0){
+        var _lNeeded=Math.ceil(MIN_SEP*_lSpan/minSameSysGap);
+        if(isH) basePlotW=Math.max(basePlotW,_lNeeded);
+        else basePlotH=Math.max(basePlotH,_lNeeded);
+      }
+    }
     sc=scale1d(minT,scMax,0,isH?basePlotW:basePlotH);
     sc._breakpoints=null;
     plotW=basePlotW; plotH=basePlotH;
