@@ -68,6 +68,7 @@ function render(){
       ca.innerHTML='<div class="estate"><div class="estate-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg></div>'+
         '<h3>No events match filters</h3><p>Adjust or clear the active filters to see events.</p></div>';
     }
+    if(typeof updateLegendColors==='function') updateLegendColors();
     return;
   }
   if(appMode==='timeline'){
@@ -79,6 +80,7 @@ function render(){
   }else{
     renderFlow(ca,document.getElementById('flow-dir').value,displayConfig.showSeq,active);
   }
+  if(typeof updateLegendColors==='function') updateLegendColors();
 }
 
 // ── LIST VIEW ───────────────────────────────────────────

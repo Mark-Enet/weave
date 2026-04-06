@@ -355,6 +355,8 @@
         Filter
         <span class="filter-badge" id="filter-badge" style="display:none"></span>
       </button>
+      <button class="btn btn-outline btn-sm" id="legend-toggle-btn"
+        onclick="toggleLegend()" title="Toggle legend">Legend</button>
     </div>
     <div class="fbar fbar-hidden" id="fbar" role="search" aria-label="Filter events">
       <input type="text" class="fsearch" id="f-text" placeholder="Search descriptions, codes, systems…" oninput="applyTextFilter()" autocomplete="off">
@@ -382,9 +384,16 @@
       </div>
       <button class="btn btn-outline btn-sm fbar-clear" id="fbar-clear" onclick="clearFilters()" title="Clear all filters">&#x2715; Clear</button>
     </div>
-    <div class="cvport">
-      <div id="stitle"></div>
-      <div id="chart"></div>
+    <div class="cvport-wrap">
+      <div class="cvport">
+        <div id="stitle"></div>
+        <div id="chart"></div>
+      </div>
+      <div id="diagram-legend">
+        <div class="leg-item"><span class="leg-line" id="leg-push"></span><span class="leg-label">push &#x2192;</span></div>
+        <div class="leg-item"><span class="leg-line" id="leg-pull"></span><span class="leg-label">pull &#x2190;</span></div>
+        <div class="leg-item"><span class="leg-line leg-line-proc" id="leg-proc"></span><span class="leg-label">process</span></div>
+      </div>
     </div>
   </main>
 </div>
