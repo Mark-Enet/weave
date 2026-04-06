@@ -327,7 +327,7 @@
       <div class="tdiv"></div>
       <div id="tl-ctrl" style="display:flex;align-items:center;gap:10px">
         <span class="tlbl">View</span>
-        <select class="tsel" id="view-mode" onchange="updateCompactBtn();render()">
+        <select class="tsel" id="view-mode" onchange="render()">
           <option value="multi">Multi-lane</option>
           <option value="single">List</option>
           <option value="table">Table</option>
@@ -337,9 +337,6 @@
           <option value="vertical">Vertical</option>
           <option value="horizontal">Horizontal</option>
         </select>
-        <button class="btn btn-outline btn-sm" id="tl-compact-btn"
-          onclick="toggleTimelineCompact()"
-          title="Compress large empty time gaps in the timeline">Compact</button>
       </div>
       <div id="fl-ctrl" style="display:none;align-items:center;gap:10px">
         <span class="tlbl">Direction</span>

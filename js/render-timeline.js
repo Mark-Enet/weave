@@ -97,9 +97,10 @@ function renderTimeline(parent,sorted,orientation){
   if(intMaxT<maxT) intMaxT=maxT;
 
   // EH — event height in pixels: visual footprint of one event node.
-  // Vertical: circle (r=13) + label text below ~60 px.
+  // Vertical: circle (r=13) + all label text below ~100 px (prevents overlap when
+  //   all optional fields are shown: desc, level, eventCode, managedIntegrationCode).
   // Horizontal: needs wider clearance for text labels alongside the axis ~150 px.
-  var EH=isH?150:60;
+  var EH=isH?150:100;
 
   // Compute minimum non-zero time gap between same-system events (used for scale
   // proportioning) and build a stack-index map for simultaneous same-system events.
