@@ -127,11 +127,10 @@ function renderTimeline(parent,sorted,orientation){
   });
   // compressed gap indicators (compact mode only)
   if(timelineCompact&&sc._breakpoints){
-    var gapC=svgColors().grid, gapStroke='#888'; // subtle gray
     sc._breakpoints.forEach(function(bp){
       if(!bp.compressed) return;
       // Mid-position of the compressed stub
-      var mid=(bp.v0+bp.v1)/2, barH=6, barW=6;
+      var mid=(bp.v0+bp.v1)/2;
       if(isH){
         // Vertical stripe across all lanes
         aR(g,bp.v0,-mg.top,bp.v1-bp.v0,plotH+mg.top+mg.bottom,{fill:'rgba(128,128,128,0.08)'});
