@@ -480,18 +480,26 @@ function dsRecordToEvent(rec, descField, sysField, actorField, tsField, eventCod
   var level     = levelField      ? dsGetFieldVal(rec, levelField)      : '';
   var integCode = integCodeField  ? dsGetFieldVal(rec, integCodeField)  : '';
   var tsMs   = null;
-  if (tsRaw) {
-    // Handle both 'YYYY-MM-DD HH:MM:SS' and ISO 8601 formats
-    var normalized = tsRaw.replace(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})/, '$1T$2');
-    var d = new Date(normalized);
-    if (!isNaN(d.getTime())) tsMs = d.getTime();
+  if (tsRaw !== null && tsRaw !== undefined && tsRaw !== '') {
+    // Handle numeric epoch timestamps (ms if >= 1e10, seconds otherwise)
+    var numVal = typeof tsRaw === 'number' ? tsRaw : (String(tsRaw).match(/^\d+(\.\d+)?$/) ? parseFloat(tsRaw) : NaN);
+    if (!isNaN(numVal) && numVal > 0) {
+      tsMs = numVal >= 1e10 ? numVal : numVal * 1000;
+    } else {
+      // Handle both 'YYYY-MM-DD HH:MM:SS' and ISO 8601 formats
+      var normalized = String(tsRaw).replace(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})/, '$1T$2');
+      var d = new Date(normalized);
+      if (!isNaN(d.getTime())) tsMs = d.getTime();
+    }
   }
+  var tsStr = tsMs ? new Date(tsMs).toISOString() : null;
   var ev = {
     _id:                      'ds-' + Date.now() + '-' + dsRandomSuffix(),
     desc:                     desc,
     system:                   sys       || '',
     actor:                    actor     || '',
     timestamp:                tsMs,
+    timestampStr:             tsStr,
     eventCode:                eventCode || '',
     level:                    level     || '',
     managedIntegrationCode:   integCode || '',
@@ -499,7 +507,13 @@ function dsRecordToEvent(rec, descField, sysField, actorField, tsField, eventCod
     mode:                     appMode
   };
   events.push(ev);
-  if (ev.system) knownSys.add(ev.system);
+  if (ev.system) {
+    knownSys.add(ev.system);
+    if (!systemsRegistry.find(function(s){return s.name===ev.system;}))
+      systemsRegistry.push({name: ev.system, desc: '', order: undefined});
+  }
+  if (ev.actor && !actorsRegistry.find(function(a){return a.name===ev.actor;}))
+    actorsRegistry.push({name: ev.actor, desc: ''});
   refreshDL();
   render();
   updateList();
