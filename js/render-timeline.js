@@ -10,55 +10,53 @@ function fmtDuration(ms){
   return parseFloat((ms/86400000).toFixed(1))+'d compressed';
 }
 
-// Build a compact (non-linear) 1-D scale from timestamps to visual range [r0,r1].
-// Gaps significantly larger than average are compressed to COMPACT_GAP_PX.
-// Returns a function sc(t) -> visual position, with sc._breakpoints for drawing.
-function buildCompactScale(allTs, r0, r1){
+// Build a compact (non-linear) 1-D scale from timestamps.
+// EH   = event height in pixels (visual footprint of one event node).
+// minGap = shortest non-zero time gap (ms) between same-system events.
+// Scale: normal gaps map proportionally at pxPerMs = 0.5*EH / minGap.
+// Large gaps (> 3*EH at natural scale, i.e. > 6*minGap ms) are compressed
+// to COMPACT_GAP_PX.  The total pixel extent is computed from the segments
+// and exposed as sc._totalPx.
+// Returns a function sc(t) -> visual position, with sc._breakpoints and sc._totalPx.
+function buildCompactScale(allTs, EH, minGap){
   var n=allTs.length;
-  if(n<=1){
-    var sc=scale1d(allTs[0]||0,(allTs[0]||0)+60000,r0,r1);
-    sc._breakpoints=null; return sc;
+  var fallbackPx=EH*10;
+  if(n<=1||minGap<=0){
+    var sc=scale1d(allTs[0]||0,(allTs[0]||0)+60000,0,fallbackPx);
+    sc._breakpoints=null; sc._totalPx=fallbackPx; return sc;
   }
 
-  // Compute consecutive gaps
+  // px per ms at natural (uncompressed) scale
+  var pxPerMs=0.5*EH/minGap;
+  // A gap is "large" when it would occupy more than 3*EH pixels at natural scale
+  var compressThreshMs=3*EH/pxPerMs; // = 6*minGap
+
   var gaps=[];
   for(var i=1;i<n;i++) gaps.push(allTs[i]-allTs[i-1]);
-
-  // A gap is compressed if it is >= 10% of the total event span.
-  var threshold=0.10*(allTs[n-1]-allTs[0]);
-  var largeMask=gaps.map(function(g){return g>=threshold;});
+  var largeMask=gaps.map(function(g){return g>compressThreshMs;});
   var numLarge=largeMask.filter(Boolean).length;
 
   if(numLarge===0){
-    // No large gaps — fall back to linear scale
-    var sc=scale1d(allTs[0],allTs[n-1],r0,r1);
-    sc._breakpoints=null; return sc;
+    // No large gaps — fully proportional scale
+    var totalPx=(allTs[n-1]-allTs[0])*pxPerMs;
+    var sc=scale1d(allTs[0],allTs[n-1],0,totalPx);
+    sc._breakpoints=null; sc._totalPx=totalPx; return sc;
   }
 
-  // Total visual space split between compressed stubs and normal proportional segments
-  var normalMs=0;
-  gaps.forEach(function(g,i){if(!largeMask[i]) normalMs+=g;});
-  var totalPx=r1-r0;
-  var compressedPx=numLarge*COMPACT_GAP_PX;
-  var normalPx=Math.max(0,totalPx-compressedPx);
-
-  // Build breakpoints [{t0,t1,v0,v1,compressed,gapMs}]
-  var breakpoints=[], curV=r0;
+  // Build breakpoints: normal gaps proportional, large gaps compressed
+  var breakpoints=[],curV=0;
   for(var i=0;i<n-1;i++){
-    var g=gaps[i], segPx;
-    if(largeMask[i]){
-      segPx=COMPACT_GAP_PX;
-    } else {
-      segPx=normalMs>0?(g/normalMs)*normalPx:normalPx/Math.max(1,gaps.length-numLarge);
-    }
+    var g=gaps[i];
+    var segPx=largeMask[i]?COMPACT_GAP_PX:g*pxPerMs;
     breakpoints.push({t0:allTs[i],t1:allTs[i+1],v0:curV,v1:curV+segPx,compressed:largeMask[i],gapMs:g});
     curV+=segPx;
   }
+  var totalPx=curV;
 
   // Scale function — linearly interpolates within each breakpoint segment
   function compactScale(t){
-    if(t<=allTs[0]) return r0;
-    if(t>=allTs[n-1]) return curV;
+    if(t<=allTs[0]) return 0;
+    if(t>=allTs[n-1]) return totalPx;
     for(var i=0;i<breakpoints.length;i++){
       var bp=breakpoints[i];
       if(t>=bp.t0&&t<=bp.t1){
@@ -66,9 +64,10 @@ function buildCompactScale(allTs, r0, r1){
         return bp.v0+(t-bp.t0)/(bp.t1-bp.t0)*(bp.v1-bp.v0);
       }
     }
-    return curV;
+    return totalPx;
   }
   compactScale._breakpoints=breakpoints;
+  compactScale._totalPx=totalPx;
   return compactScale;
 }
 
@@ -97,15 +96,36 @@ function renderTimeline(parent,sorted,orientation){
   // scale1d/buildCompactScale always receives a non-zero range).
   if(intMaxT<maxT) intMaxT=maxT;
 
-  // Compute minimum time gap (> 0) between events in the same system.
-  // Used below to expand the plot when events would otherwise overlap.
-  var MIN_SEP=isH?200:70;
+  // EH — event height in pixels: visual footprint of one event node.
+  // Vertical: circle (r=13) + label text below ~60 px.
+  // Horizontal: needs wider clearance for text labels alongside the axis ~150 px.
+  var EH=isH?150:60;
+
+  // Compute minimum non-zero time gap between same-system events (used for scale
+  // proportioning) and build a stack-index map for simultaneous same-system events.
   var _syBuckets={};
   sorted.forEach(function(e){if(!_syBuckets[e.system])_syBuckets[e.system]=[];_syBuckets[e.system].push(e.timestamp);});
   var minSameSysGap=0;
   Object.keys(_syBuckets).forEach(function(sys){
     var ts=_syBuckets[sys].sort(function(a,b){return a-b;});
     for(var _si=1;_si<ts.length;_si++){var _g=ts[_si]-ts[_si-1];if(_g>0&&(minSameSysGap===0||_g<minSameSysGap))minSameSysGap=_g;}
+  });
+
+  // Assign a stack index to each event: events sharing (system, timestamp) are
+  // rendered offset by EH in the time direction so they never overlap.
+  var _syTsMap={};
+  sorted.forEach(function(e){
+    var key=e.system+'|||'+e.timestamp;
+    if(!_syTsMap[key])_syTsMap[key]=[];
+    _syTsMap[key].push(e);
+  });
+  var eventStack={}; // _id -> stackIndex (0 for first, 1 for second, …)
+  var maxStackIndex=0;
+  Object.keys(_syTsMap).forEach(function(key){
+    _syTsMap[key].forEach(function(e,idx){
+      eventStack[e._id]=idx;
+      if(idx>maxStackIndex) maxStackIndex=idx;
+    });
   });
 
   // Build scale — compact or linear depending on user preference
@@ -119,27 +139,11 @@ function renderTimeline(parent,sorted,orientation){
     sorted.forEach(function(e){tsSet[e.timestamp]=true;});
     var allTs=Object.keys(tsSet).map(Number).sort(function(a,b){return a-b;});
     if(intMaxT>allTs[allTs.length-1]) allTs.push(intMaxT);
-    // Expand plot so same-system events are at least MIN_SEP pixels apart.
-    if(minSameSysGap>0){
-      var _cSpan=allTs[allTs.length-1]-allTs[0];
-      var _cThresh=0.10*_cSpan;
-      var _cGaps=[]; for(var _ci=1;_ci<allTs.length;_ci++) _cGaps.push(allTs[_ci]-allTs[_ci-1]);
-      var _cNumLarge=_cGaps.filter(function(g){return g>=_cThresh;}).length;
-      var _cNormalMs=_cGaps.reduce(function(s,g){return s+(g<_cThresh?g:0);},0);
-      var _cCompPx=_cNumLarge*COMPACT_GAP_PX;
-      if(minSameSysGap<_cThresh&&_cNormalMs>0){
-        var _cPlotDim=isH?basePlotW:basePlotH;
-        var _cNormalPx=_cPlotDim-_cCompPx;
-        var _cMinPx=(minSameSysGap/_cNormalMs)*_cNormalPx;
-        if(_cMinPx<MIN_SEP){
-          var _cNeeded=Math.ceil(MIN_SEP*_cNormalMs/minSameSysGap+_cCompPx);
-          if(isH) basePlotW=Math.max(basePlotW,_cNeeded);
-          else basePlotH=Math.max(basePlotH,_cNeeded);
-        }
-      }
-    }
-    sc=buildCompactScale(allTs,0,isH?basePlotW:basePlotH);
-    plotW=basePlotW; plotH=basePlotH;
+    sc=buildCompactScale(allTs,EH,minSameSysGap);
+    // Plot size: scale range + room for the deepest simultaneous stack
+    var scTimeDim=sc._totalPx+maxStackIndex*EH;
+    if(isH){plotW=Math.max(N*LANE*2,scTimeDim); plotH=basePlotH;}
+    else    {plotW=basePlotW; plotH=Math.max(N*LANE,scTimeDim);}
   } else {
     // Linear: scale covers [minT, scMax] where scMax is the furthest interaction
     // endpoint (or maxT if no interactions). This makes delays proportionally
@@ -147,6 +151,7 @@ function renderTimeline(parent,sorted,orientation){
     // than the source event, with visual distance proportional to the delay.
     var scMax=intMaxT>maxT?intMaxT:maxT;
     // Expand plot so same-system events are at least MIN_SEP pixels apart.
+    var MIN_SEP=isH?200:70;
     if(minSameSysGap>0){
       var _lSpan=scMax-minT;
       if(_lSpan>0){
@@ -157,8 +162,13 @@ function renderTimeline(parent,sorted,orientation){
     }
     sc=scale1d(minT,scMax,0,isH?basePlotW:basePlotH);
     sc._breakpoints=null;
-    plotW=basePlotW; plotH=basePlotH;
+    // Add room for simultaneous-event stacks beyond the scale range
+    if(isH){plotW=basePlotW+maxStackIndex*EH; plotH=basePlotH;}
+    else    {plotW=basePlotW; plotH=basePlotH+maxStackIndex*EH;}
   }
+
+  // evPos — visual position of event e along the time axis, accounting for stacking.
+  function evPos(e){return sc(e.timestamp)+(eventStack[e._id]||0)*EH;}
   var W=plotW+mg.left+mg.right, H=plotH+mg.top+mg.bottom;
   function lp(i){return i*LANE+LANE/2;}
   var svg=mkSVG(W,H), rid=svg._rid, g=sv('g',{transform:'translate('+mg.left+','+mg.top+')'});
@@ -219,7 +229,7 @@ function renderTimeline(parent,sorted,orientation){
   // 1. Collect all arrows
   var arrows=[];
   sorted.forEach(function(e){
-    var si=sysArr.indexOf(e.system), tp=sc(e.timestamp), bp=lp(si);
+    var si=sysArr.indexOf(e.system), tp=evPos(e), bp=lp(si);
     var sortedI=[...(e.interactions||[])].sort(function(a,b){return (a.order||0)-(b.order||0);});
     sortedI.forEach(function(inter,iIdx){
       var ti2=sysArr.indexOf(inter.target); if(ti2===-1) return;
@@ -300,7 +310,7 @@ function renderTimeline(parent,sorted,orientation){
 
   // nodes
   sorted.forEach(function(e){
-    var si=sysArr.indexOf(e.system), tp=sc(e.timestamp), bp=lp(si);
+    var si=sysArr.indexOf(e.system), tp=evPos(e), bp=lp(si);
     var cx=isH?tp:bp, cy=isH?bp:tp, color=COLORS_ARR()[si%COLORS_ARR().length];
     aC(g,cx,cy,13,{fill:svgColors().nodeFill,stroke:color,'stroke-width':'2.5'});
     if(displayConfig.showActor&&e.actor) aT(g,cx,cy+4,initials(e.actor),{'text-anchor':'middle','font-size':'9','fill':svgColors().actor,'font-weight':'700','font-family':'DM Mono,monospace'});
