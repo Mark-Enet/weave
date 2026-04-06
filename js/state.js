@@ -52,7 +52,15 @@ function fmtTs(ms,showDate){
   return showDate?date+' '+time:time;
 }
 function fromDTL(v){return v?new Date(v).getTime():null;}
-function toDTL(iso){return iso?iso.replace('Z','').slice(0,19):'';}
+function toDTL(iso){
+  if(!iso) return '';
+  var d=new Date(iso);
+  // Adjust UTC time to local time so datetime-local input displays correctly.
+  // getTimezoneOffset() returns (UTC - local) in minutes; subtracting it shifts
+  // the UTC epoch into a "fake UTC" value that toISOString() will render as
+  // local clock time — which is what the datetime-local input expects.
+  return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,19);
+}
 
 // SYSTEM ARRAY — sorted by sysOrder, then alphabetically
 function getSysArray(sySet){
