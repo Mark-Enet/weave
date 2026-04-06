@@ -42,8 +42,9 @@ function refreshFilterBar(){
         inp.value=val;
         inp.checked=selected.indexOf(val)!==-1;
         inp.addEventListener('change',function(){applyFDDChange(fd.key);});
+        var dispVal=(fd.key==='levels'&&LEVEL_LABELS[val])?LEVEL_LABELS[val]:val;
         chk.appendChild(inp);
-        chk.appendChild(document.createTextNode(val));
+        chk.appendChild(document.createTextNode(dispVal));
         panel.appendChild(chk);
       });
     }

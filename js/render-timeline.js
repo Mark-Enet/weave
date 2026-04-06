@@ -316,11 +316,11 @@ function renderTimeline(parent,sorted,orientation){
   sorted.forEach(function(e){
     var si=sysArr.indexOf(e.system), tp=evPos(e), bp=lp(si);
     var cx=isH?tp:bp, cy=isH?bp:tp, color=COLORS_ARR()[si%COLORS_ARR().length];
-    // Level initial inside circle (initial letter + level color)
+    // Level icon inside circle (icon shape + level color)
     var lc=e.level?levelColor(e.level):null;
     var strokeColor=lc||color;
     aC(g,cx,cy,17,{fill:svgColors().nodeFill,stroke:strokeColor,'stroke-width':'2.5'});
-    if(lc) aT(g,cx,cy+5,e.level.charAt(0).toUpperCase(),{'text-anchor':'middle','font-size':'12','fill':lc,'font-weight':'700','font-family':'DM Mono,monospace'});
+    if(lc) drawLevelIcon(g,cx,cy,e.level,lc);
     // Text labels below/beside node
     var textX=isH?cx:cx+21, textAnchor=isH?'middle':'start';
     var textY=isH?cy+34:cy+5;

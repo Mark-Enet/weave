@@ -501,7 +501,7 @@ function dsRecordToEvent(rec, descField, sysField, actorField, tsField, eventCod
     timestamp:                tsMs,
     timestampStr:             tsStr,
     eventCode:                eventCode || '',
-    level:                    level     || '',
+    level:                    normalizeLevel(level),
     managedIntegrationCode:   integCode || '',
     interactions:             [],
     mode:                     appMode

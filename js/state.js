@@ -5,7 +5,10 @@ var timelineCompact = true;
 var sysOrder={}; // { systemName: orderNumber } — lower = earlier in diagram
 var systemsRegistry=[]; // [{name,desc,order}]
 var actorsRegistry=[];  // [{name,desc}]
-var levelsRegistry=['debug','info','warning','error']; // known event levels
+var FIXED_LEVELS=['info','warning','error','debug','comment','work_note','other'];
+var LEVEL_LABELS={info:'Info',warning:'Warning',error:'Error',debug:'Debug',comment:'Comment',work_note:'Work Note',other:'Other'};
+var levelsRegistry=FIXED_LEVELS.slice(); // fixed event levels
+function normalizeLevel(val){var v=(val||'').toString().trim().toLowerCase();if(!v)return '';return FIXED_LEVELS.indexOf(v)!==-1?v:'other';}
 var knownSys=new Set();
 var displayConfig={showLevel:true,showEventCode:true,showManagedIntegrationCode:true,showActor:true,showDate:true,showSeq:true};
 var filterConfig={text:'',systems:[],actors:[],levels:[],eventCodes:[],integrationCodes:[]};
@@ -35,6 +38,8 @@ function svgColors(){
     actor:    dark?'#fff':'#5a3e28',
     debug:    dark?'#99aacc':'#5566aa',
     subRowBg: dark?'rgba(30,26,50,.6)':'rgba(255,248,240,.9)',
+    cmnt:     dark?'#60a8d0':'#2880b8',
+    note:     dark?'#d4a060':'#9a6c30',
   };
 }
 

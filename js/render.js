@@ -42,11 +42,39 @@ function mkSVG(W,H){
 }
 function scale1d(d0,d1,r0,r1){var f=(d1===d0)?0:(r1-r0)/(d1-d0);return function(v){return r0+(v-d0)*f;};}
 function levelColor(level){
-  if(level==='error') return svgColors().accent;
-  if(level==='warning') return '#f5a623';
-  if(level==='info') return svgColors().teal;
-  if(level==='debug') return svgColors().debug;
+  if(level==='error')     return svgColors().accent;
+  if(level==='warning')   return '#f5a623';
+  if(level==='info')      return svgColors().teal;
+  if(level==='debug')     return svgColors().debug;
+  if(level==='comment')   return svgColors().cmnt;
+  if(level==='work_note') return svgColors().note;
   return svgColors().label;
+}
+function drawLevelIcon(g,cx,cy,level,color){
+  var sw={'stroke':color,'stroke-width':'2','stroke-linecap':'round','fill':'none'};
+  var sw3={'stroke':color,'stroke-width':'2.5','stroke-linecap':'round','fill':'none'};
+  if(level==='info'){
+    aC(g,cx,cy-5,1.5,{fill:color,stroke:'none'});
+    aL(g,cx,cy-2,cx,cy+6,sw);
+  }else if(level==='warning'){
+    aL(g,cx,cy-5,cx,cy+1,sw);
+    aC(g,cx,cy+5,1.5,{fill:color,stroke:'none'});
+  }else if(level==='error'){
+    aL(g,cx-5,cy-5,cx+5,cy+5,sw3);
+    aL(g,cx+5,cy-5,cx-5,cy+5,sw3);
+  }else if(level==='debug'){
+    aP(g,'M '+cx+' '+(cy-7)+' L '+(cx+6)+' '+cy+' L '+cx+' '+(cy+7)+' L '+(cx-6)+' '+cy+' Z',{fill:color,stroke:'none'});
+  }else if(level==='comment'){
+    aC(g,cx-4,cy,1.5,{fill:color,stroke:'none'});
+    aC(g,cx,cy,1.5,{fill:color,stroke:'none'});
+    aC(g,cx+4,cy,1.5,{fill:color,stroke:'none'});
+  }else if(level==='work_note'){
+    aL(g,cx-5,cy-4,cx+5,cy-4,sw);
+    aL(g,cx-5,cy,cx+5,cy,sw);
+    aL(g,cx-5,cy+4,cx+5,cy+4,sw);
+  }else{
+    aT(g,cx,cy+5,'?',{'text-anchor':'middle','font-size':'14','fill':color,'font-weight':'700','font-family':'DM Mono,monospace'});
+  }
 }
 function aT(p,x,y,t,a){var e=sv('text',Object.assign({x:x,y:y},a));e.textContent=t;p.appendChild(e);return e;}
 function aL(p,x1,y1,x2,y2,a){p.appendChild(sv('line',Object.assign({x1:x1,y1:y1,x2:x2,y2:y2},a)));return p;}
