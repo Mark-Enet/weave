@@ -209,7 +209,7 @@ function editEvent(idx){
   document.getElementById('event-level').value=e.level||'';
   document.getElementById('event-code').value=e.eventCode||'';
   document.getElementById('managed-integration-code').value=e.managedIntegrationCode||'';
-  if(appMode==='timeline'&&e.timestampStr) document.getElementById('ts').value=toDTL(e.timestampStr);
+  if(appMode==='timeline'&&(e.timestampStr||e.timestamp)) document.getElementById('ts').value=toDTL(e.timestampStr||new Date(e.timestamp).toISOString());
   clearI();
   var sortedInts=[...( e.interactions||[])].sort(function(a,b){return (a.order||0)-(b.order||0);});
   sortedInts.forEach(function(i,idx){addIField(i.target,i.delay||0,i.nature,i.triggerEventId||'',idx,i.label||'');});
