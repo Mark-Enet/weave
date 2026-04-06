@@ -49,8 +49,7 @@ function initLegend(){
   var hidden=localStorage.getItem('weave-legend-hidden')==='1';
   var leg=document.getElementById('diagram-legend');
   var btn=document.getElementById('legend-toggle-btn');
-  if(hidden) leg.classList.add('legend-hidden');
-  else leg.classList.remove('legend-hidden');
+  leg.classList.toggle('legend-hidden',hidden);
   btn.classList.toggle('active',!hidden);
   updateLegendColors();
 }
