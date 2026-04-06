@@ -1,6 +1,4 @@
 // ── COMPACT TIMELINE SCALE ──────────────────────────────
-// Visual pixels allocated to each compressed (large) gap.
-var COMPACT_GAP_PX = 40;
 
 // Format a duration (ms) into a human-readable compressed-gap label.
 function fmtDuration(ms){
@@ -13,10 +11,12 @@ function fmtDuration(ms){
 // Build a compact (non-linear) 1-D scale from timestamps.
 // EH   = event height in pixels (visual footprint of one event node).
 // minGap = shortest non-zero time gap (ms) between same-system events.
-// Scale: normal gaps map proportionally at pxPerMs = 0.5*EH / minGap.
-// Large gaps (> 3*EH at natural scale, i.e. > 6*minGap ms) are compressed
-// to COMPACT_GAP_PX.  The total pixel extent is computed from the segments
-// and exposed as sc._totalPx.
+// Scale: normal gaps map proportionally at pxPerMs = EH / minGap, so the
+// smallest gap always occupies exactly EH pixels (one event footprint).
+// Large gaps (> 3*EH at natural scale, i.e. > 3*minGap ms) are compressed
+// to EH pixels so events at their boundaries are also exactly EH apart.
+// This guarantees adjacent events are never closer than EH px (no overlap).
+// The total pixel extent is computed from the segments and exposed as sc._totalPx.
 // Returns a function sc(t) -> visual position, with sc._breakpoints and sc._totalPx.
 function buildCompactScale(allTs, EH, minGap){
   var n=allTs.length;
@@ -26,10 +26,13 @@ function buildCompactScale(allTs, EH, minGap){
     sc._breakpoints=null; sc._totalPx=fallbackPx; return sc;
   }
 
-  // px per ms at natural (uncompressed) scale
-  var pxPerMs=0.5*EH/minGap;
+  // px per ms at natural (uncompressed) scale — minimum gap maps to exactly EH px
+  var pxPerMs=EH/minGap;
   // A gap is "large" when it would occupy more than 3*EH pixels at natural scale
-  var compressThreshMs=3*EH/pxPerMs; // = 6*minGap
+  var compressThreshMs=3*EH/pxPerMs; // = 3*minGap
+  // Compressed gaps are allocated exactly EH pixels so no two adjacent events
+  // are ever closer than EH px (matching the event visual footprint).
+  var compactGapPx=EH;
 
   var gaps=[];
   for(var i=1;i<n;i++) gaps.push(allTs[i]-allTs[i-1]);
@@ -47,7 +50,7 @@ function buildCompactScale(allTs, EH, minGap){
   var breakpoints=[],curV=0;
   for(var i=0;i<n-1;i++){
     var g=gaps[i];
-    var segPx=largeMask[i]?COMPACT_GAP_PX:g*pxPerMs;
+    var segPx=largeMask[i]?compactGapPx:g*pxPerMs;
     breakpoints.push({t0:allTs[i],t1:allTs[i+1],v0:curV,v1:curV+segPx,compressed:largeMask[i],gapMs:g});
     curV+=segPx;
   }
