@@ -3,6 +3,7 @@
 var DS_CONFIG_KEY = 'weave-ds-config';
 var DS_TOKEN_KEY  = 'weave-ds-token';
 var DS_PKCE_KEY   = 'weave-ds-pkce';   // sessionStorage — cleared on tab close
+var DS_QUERY_KEY  = 'weave-ds-query';  // localStorage — persists query form state
 
 // ── CONFIG ─────────────────────────────────────────────────────────────────
 function dsLoadConfig() {
@@ -333,16 +334,20 @@ function dsUpdatePanelStatus() {
 
 // ── QUERY PANEL ────────────────────────────────────────────────────────────
 function dsRunQuery() {
-  var endpoint   = document.getElementById('ds-endpoint').value.trim();
-  var queryStr   = document.getElementById('ds-query').value.trim();
-  var descField  = document.getElementById('ds-desc-field').value.trim();
-  var sysField   = document.getElementById('ds-sys-field').value.trim();
-  var actorField = document.getElementById('ds-actor-field').value.trim();
-  var tsField    = document.getElementById('ds-ts-field').value.trim();
+  var endpoint          = document.getElementById('ds-endpoint').value.trim();
+  var queryStr          = document.getElementById('ds-query').value.trim();
+  var descField         = document.getElementById('ds-desc-field').value.trim();
+  var sysField          = document.getElementById('ds-sys-field').value.trim();
+  var actorField        = document.getElementById('ds-actor-field').value.trim();
+  var tsField           = document.getElementById('ds-ts-field').value.trim();
+  var eventCodeField    = document.getElementById('ds-event-code-field').value.trim();
+  var levelField        = document.getElementById('ds-level-field').value.trim();
+  var integCodeField    = document.getElementById('ds-integration-code-field').value.trim();
 
   if (!endpoint) { toast('Endpoint path is required', '!'); return; }
 
-  // Parse query string key=value pairs into a params object
+  // Auto-save query form to localStorage
+  dsSaveQueryLocal();
   var params = {};
   if (queryStr) {
     queryStr.split('&').forEach(function(pair) {
@@ -370,7 +375,7 @@ function dsRunQuery() {
         ? data
         : (data.result || data.data || data.records || data.items || []);
       statusEl.textContent = records.length + ' record(s) returned';
-      dsShowResults(records, descField, sysField, actorField, tsField);
+      dsShowResults(records, descField, sysField, actorField, tsField, eventCodeField, levelField, integCodeField);
     })
     .catch(function(e) {
       statusEl.textContent = 'Error: ' + e.message;
@@ -404,13 +409,16 @@ function dsRandomSuffix() {
   return Array.from(arr).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
 }
 
-function dsShowResults(records, descField, sysField, actorField, tsField) {
+function dsShowResults(records, descField, sysField, actorField, tsField, eventCodeField, levelField, integCodeField) {
   var el = document.getElementById('ds-results');
-  el._records    = records;
-  el._descField  = descField;
-  el._sysField   = sysField;
-  el._actorField = actorField;
-  el._tsField    = tsField;
+  el._records          = records;
+  el._descField        = descField;
+  el._sysField         = sysField;
+  el._actorField       = actorField;
+  el._tsField          = tsField;
+  el._eventCodeField   = eventCodeField  || '';
+  el._levelField       = levelField      || '';
+  el._integCodeField   = integCodeField  || '';
 
   if (!records.length) {
     el.innerHTML = '<div class="hint" style="padding:8px 0">No records found.</div>';
@@ -441,7 +449,7 @@ function dsImportRecord(idx) {
   var el  = document.getElementById('ds-results');
   var rec = (el._records || [])[idx];
   if (!rec) return;
-  dsRecordToEvent(rec, el._descField, el._sysField, el._actorField, el._tsField);
+  dsRecordToEvent(rec, el._descField, el._sysField, el._actorField, el._tsField, el._eventCodeField, el._levelField, el._integCodeField);
   var item = document.getElementById('dsri-' + idx);
   var btn  = document.getElementById('ds-add-' + idx);
   if (item) item.classList.add('ds-imported');
@@ -453,7 +461,7 @@ function dsImportAll() {
   var records = el._records || [];
   if (!records.length) return;
   records.forEach(function(rec, i) {
-    dsRecordToEvent(rec, el._descField, el._sysField, el._actorField, el._tsField);
+    dsRecordToEvent(rec, el._descField, el._sysField, el._actorField, el._tsField, el._eventCodeField, el._levelField, el._integCodeField);
     var item = document.getElementById('dsri-' + i);
     var btn  = document.getElementById('ds-add-' + i);
     if (item) item.classList.add('ds-imported');
@@ -463,11 +471,14 @@ function dsImportAll() {
   toast(records.length + ' record(s) imported', '\u2191');
 }
 
-function dsRecordToEvent(rec, descField, sysField, actorField, tsField) {
-  var desc   = dsGetRecordDesc(rec, descField);
-  var sys    = sysField   ? dsGetFieldVal(rec, sysField)   : '';
-  var actor  = actorField ? dsGetFieldVal(rec, actorField) : '';
-  var tsRaw  = tsField    ? dsGetFieldVal(rec, tsField)    : '';
+function dsRecordToEvent(rec, descField, sysField, actorField, tsField, eventCodeField, levelField, integCodeField) {
+  var desc      = dsGetRecordDesc(rec, descField);
+  var sys       = sysField        ? dsGetFieldVal(rec, sysField)        : '';
+  var actor     = actorField      ? dsGetFieldVal(rec, actorField)      : '';
+  var tsRaw     = tsField         ? dsGetFieldVal(rec, tsField)         : '';
+  var eventCode = eventCodeField  ? dsGetFieldVal(rec, eventCodeField)  : '';
+  var level     = levelField      ? dsGetFieldVal(rec, levelField)      : '';
+  var integCode = integCodeField  ? dsGetFieldVal(rec, integCodeField)  : '';
   var tsMs   = null;
   if (tsRaw) {
     // Handle both 'YYYY-MM-DD HH:MM:SS' and ISO 8601 formats
@@ -476,13 +487,16 @@ function dsRecordToEvent(rec, descField, sysField, actorField, tsField) {
     if (!isNaN(d.getTime())) tsMs = d.getTime();
   }
   var ev = {
-    _id:          'ds-' + Date.now() + '-' + dsRandomSuffix(),
-    desc:         desc,
-    system:       sys   || '',
-    actor:        actor || '',
-    timestamp:    tsMs,
-    interactions: [],
-    mode:         appMode
+    _id:                      'ds-' + Date.now() + '-' + dsRandomSuffix(),
+    desc:                     desc,
+    system:                   sys       || '',
+    actor:                    actor     || '',
+    timestamp:                tsMs,
+    eventCode:                eventCode || '',
+    level:                    level     || '',
+    managedIntegrationCode:   integCode || '',
+    interactions:             [],
+    mode:                     appMode
   };
   events.push(ev);
   if (ev.system) knownSys.add(ev.system);
@@ -561,6 +575,109 @@ function dsImportConfigFile(e) {
   e.target.value = '';
 }
 
+// ── QUERY IMPORT / EXPORT ──────────────────────────────────────────────────
+function dsReadQueryForm() {
+  return {
+    endpoint:       (document.getElementById('ds-endpoint').value             || '').trim(),
+    queryParams:    (document.getElementById('ds-query').value                || '').trim(),
+    descField:      (document.getElementById('ds-desc-field').value           || '').trim(),
+    sysField:       (document.getElementById('ds-sys-field').value            || '').trim(),
+    actorField:     (document.getElementById('ds-actor-field').value          || '').trim(),
+    tsField:        (document.getElementById('ds-ts-field').value             || '').trim(),
+    eventCodeField: (document.getElementById('ds-event-code-field').value     || '').trim(),
+    levelField:     (document.getElementById('ds-level-field').value          || '').trim(),
+    integCodeField: (document.getElementById('ds-integration-code-field').value || '').trim()
+  };
+}
+
+function dsPopulateQueryForm(q) {
+  document.getElementById('ds-endpoint').value                    = q.endpoint       || '';
+  document.getElementById('ds-query').value                       = q.queryParams    || '';
+  document.getElementById('ds-desc-field').value                  = q.descField      || '';
+  document.getElementById('ds-sys-field').value                   = q.sysField       || '';
+  document.getElementById('ds-actor-field').value                 = q.actorField     || '';
+  document.getElementById('ds-ts-field').value                    = q.tsField        || '';
+  document.getElementById('ds-event-code-field').value            = q.eventCodeField || '';
+  document.getElementById('ds-level-field').value                 = q.levelField     || '';
+  document.getElementById('ds-integration-code-field').value      = q.integCodeField || '';
+}
+
+function dsSaveQueryLocal() {
+  try { localStorage.setItem(DS_QUERY_KEY, JSON.stringify(dsReadQueryForm())); } catch(e) {}
+}
+
+function dsLoadQueryLocal() {
+  try { return JSON.parse(localStorage.getItem(DS_QUERY_KEY)) || null; } catch(e) { return null; }
+}
+
+function dsIsQueryEmpty(q) {
+  return !q.endpoint && !q.queryParams && !q.descField && !q.sysField && !q.actorField &&
+         !q.tsField && !q.eventCodeField && !q.levelField && !q.integCodeField;
+}
+
+function dsExportQuery() {
+  var q = dsReadQueryForm();
+  if (dsIsQueryEmpty(q)) {
+    toast('No query to export', '!');
+    return;
+  }
+  var fieldMap = {
+    desc:            q.descField,
+    system:          q.sysField,
+    actor:           q.actorField,
+    timestamp:       q.tsField,
+    eventCode:       q.eventCodeField,
+    level:           q.levelField,
+    integrationCode: q.integCodeField
+  };
+  var exportObj = { weaveDsQuery: true, endpoint: q.endpoint, queryParams: q.queryParams, fieldMap: fieldMap };
+  var blob = new Blob([JSON.stringify(exportObj, null, 2)], {type: 'application/json'});
+  var url  = URL.createObjectURL(blob);
+  var a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'weave-ds-query.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Query exported', '\u2193');
+}
+
+function dsImportQueryClick() {
+  document.getElementById('ds-query-file').click();
+}
+
+function dsImportQueryFile(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      var data = JSON.parse(ev.target.result);
+      if (!data.weaveDsQuery) {
+        toast('Not a valid Weave query file', '\u2715');
+        return;
+      }
+      var fm = data.fieldMap || {};
+      dsPopulateQueryForm({
+        endpoint:       data.endpoint    || '',
+        queryParams:    data.queryParams || '',
+        descField:      fm.desc          || '',
+        sysField:       fm.system        || '',
+        actorField:     fm.actor         || '',
+        tsField:        fm.timestamp     || '',
+        eventCodeField: fm.eventCode     || '',
+        levelField:     fm.level         || '',
+        integCodeField: fm.integrationCode || ''
+      });
+      dsSaveQueryLocal();
+      toast('Query imported', '\u2191');
+    } catch(err) {
+      toast('Invalid query file', '\u2715');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
 // ── INIT ───────────────────────────────────────────────────────────────────
 function dsInit() {
   // Close menu when clicking outside
@@ -574,6 +691,10 @@ function dsInit() {
       dsCloseBannerMenu();
     }
   });
+
+  // Restore saved query form from localStorage
+  var savedQuery = dsLoadQueryLocal();
+  if (savedQuery) dsPopulateQueryForm(savedQuery);
 
   // Handle OAuth callback (page loaded with ?code=...)
   if (window.location.search.indexOf('code=') !== -1 ||
