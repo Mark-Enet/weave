@@ -177,11 +177,18 @@ function renderTimeline(parent,sorted,orientation){
       var ti2=sysArr.indexOf(inter.target); if(ti2===-1) return;
       var tLane=lp(ti2), tTP=sc(e.timestamp+(inter.delay||0));
       var ic=inter.nature==='push'?svgColors().accent:inter.nature==='pull'?svgColors().teal:svgColors().proc;
-      var sx=isH?tp:bp, sy=isH?bp:tp;
-      var tx=isH?tTP:tLane, ty=isH?tLane:tTP;
+      var sx,sy,tx,ty;
+      if(inter.nature==='pull'){
+        // Pull: data flows FROM target lane TO source lane, forward in time
+        sx=isH?tp:tLane; sy=isH?tLane:tp;
+        tx=isH?tTP:bp;   ty=isH?bp:tTP;
+      } else {
+        sx=isH?tp:bp; sy=isH?bp:tp;
+        tx=isH?tTP:tLane; ty=isH?tLane:tTP;
+      }
       arrows.push({
         sx:sx,sy:sy,tx:tx,ty:ty,
-        nature:inter.nature,color:ic,isPull:inter.nature==='pull',
+        nature:inter.nature,color:ic,
         label:inter.label||(appMode==='timeline'&&inter.delay?inter.nature+' +'+inter.delay+'ms':''),
         seqIdx:iIdx,_offset:0
       });
@@ -230,18 +237,10 @@ function renderTimeline(parent,sorted,orientation){
     var otx=ar.tx+px*off, oty=ar.ty+py*off;
 
     var x1,y1,x2,y2,mEnd;
-    if(ar.isPull){
-      var p1=clipCircle(ar.tx,ar.ty,osx,osy,NODE_R+2);
-      var p2=clipCircle(ar.sx,ar.sy,otx,oty,NODE_R+2);
-      x1=p1.x; y1=p1.y; x2=p2.x; y2=p2.y;
-      mEnd='url(#arr-pull-'+rid+')';
-    } else {
-      var p1=clipCircle(ar.sx,ar.sy,otx,oty,NODE_R+2);
-      var p2=clipCircle(ar.tx,ar.ty,osx,osy,NODE_R+2);
-      x1=p1.x; y1=p1.y; x2=p2.x; y2=p2.y;
-      mEnd='url(#arr-'+ar.nature+'-'+rid+')';
-    }
-    if(ar.nature==='process') mEnd='';
+    var p1=clipCircle(ar.sx,ar.sy,otx,oty,NODE_R+2);
+    var p2=clipCircle(ar.tx,ar.ty,osx,osy,NODE_R+2);
+    x1=p1.x; y1=p1.y; x2=p2.x; y2=p2.y;
+    mEnd=ar.nature==='process'?'':'url(#arr-'+ar.nature+'-'+rid+')';
 
     aL(g,x1,y1,x2,y2,{stroke:ar.color,'stroke-width':2,'stroke-dasharray':ar.nature==='process'?'5,3':'','marker-end':mEnd});
     var mx=(x1+x2)/2+(isH?0:5), my=(y1+y2)/2-14;
