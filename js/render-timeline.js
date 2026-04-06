@@ -78,20 +78,25 @@ function renderTimeline(parent,sorted,orientation){
   var sySet=new Set();
   sorted.forEach(function(e){sySet.add(e.system);(e.interactions||[]).forEach(function(i){if(i.target)sySet.add(i.target);});});
   var sysArr=getSysArray(sySet), N=sysArr.length, isH=orientation==='horizontal';
+  // Scale is based on event timestamps only so events are positioned by their
+  // actual timestamps, not distorted by interaction delays.
   var minT=sorted[0].timestamp, maxT=sorted[0].timestamp;
   sorted.forEach(function(e){
     minT=Math.min(minT,e.timestamp); maxT=Math.max(maxT,e.timestamp);
-    (e.interactions||[]).forEach(function(i){maxT=Math.max(maxT,e.timestamp+(i.delay||0));});
+  });
+  // Separately track the furthest interaction endpoint for plot sizing.
+  var intMaxT=maxT;
+  sorted.forEach(function(e){
+    (e.interactions||[]).forEach(function(i){intMaxT=Math.max(intMaxT,e.timestamp+(i.delay||0));});
   });
   if(minT===maxT) maxT=minT+60000;
   var LANE=isH?110:150, mg={top:65,right:80,bottom:65,left:165};
-  var plotW=isH?Math.max(1200,N*LANE*2):N*LANE, plotH=isH?N*LANE:Math.max(600,sorted.length*100);
-  var W=plotW+mg.left+mg.right, H=plotH+mg.top+mg.bottom;
+  var basePlotW=isH?Math.max(1200,N*LANE*2):N*LANE, basePlotH=isH?N*LANE:Math.max(600,sorted.length*100);
 
   // Build scale — compact or linear depending on user preference
-  var sc;
+  var sc, plotW, plotH;
   if(timelineCompact){
-    // Collect all timestamps (events + interaction destinations) as anchor points
+    // Compact: include interaction endpoints as anchor points so large gaps get compressed.
     var tsSet={};
     tsSet[minT]=true; tsSet[maxT]=true;
     sorted.forEach(function(e){
@@ -99,11 +104,18 @@ function renderTimeline(parent,sorted,orientation){
       (e.interactions||[]).forEach(function(i){tsSet[e.timestamp+(i.delay||0)]=true;});
     });
     var allTs=Object.keys(tsSet).map(Number).sort(function(a,b){return a-b;});
-    sc=buildCompactScale(allTs,0,isH?plotW:plotH);
+    sc=buildCompactScale(allTs,0,isH?basePlotW:basePlotH);
+    plotW=basePlotW; plotH=basePlotH;
   } else {
-    sc=scale1d(minT,maxT,0,isH?plotW:plotH);
+    // Linear: scale on event timestamps only; extend plot dimensions to show
+    // interaction endpoints so the lines reach timestamp + delay.
+    sc=scale1d(minT,maxT,0,isH?basePlotW:basePlotH);
     sc._breakpoints=null;
+    var intPos=Math.ceil(sc(intMaxT));
+    plotW=isH?Math.max(basePlotW,intPos):basePlotW;
+    plotH=isH?basePlotH:Math.max(basePlotH,intPos);
   }
+  var W=plotW+mg.left+mg.right, H=plotH+mg.top+mg.bottom;
   function lp(i){return i*LANE+LANE/2;}
   var svg=mkSVG(W,H), rid=svg._rid, g=sv('g',{transform:'translate('+mg.left+','+mg.top+')'});
   svg.appendChild(g);
