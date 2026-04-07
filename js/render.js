@@ -114,16 +114,17 @@ function render(){
 // ── LIST VIEW ───────────────────────────────────────────
 function renderList(parent,sorted){
   var wrap=document.createElement('div'); wrap.style.cssText='max-width:680px;margin:0 auto';
+  var tz=getDisplayTZ();
   sorted.forEach(function(e){
     var d=document.createElement('div');
     var c=svgColors();d.style.cssText='background:'+c.listBg+';border:1px solid '+c.listBdr+';border-radius:10px;padding:13px 15px;margin-bottom:10px;border-left:3px solid '+c.accent;
-    var ts=new Date(e.timestamp).toISOString().slice(0,19).replace('T',' ');
+    var ts=fmtTs(e.timestamp,displayConfig.showDate);
     var levelHtml='';
     if(displayConfig.showLevel&&e.level){
       var lc=levelColor(e.level);
       levelHtml='<span style="display:inline-block;font-family:DM Mono,monospace;font-size:.65rem;font-weight:800;padding:1px 6px;border-radius:4px;background:'+lc+'22;color:'+lc+';margin-left:6px;vertical-align:middle">'+esc(e.level.toUpperCase())+'</span>';
     }
-    var h='<div style="font-family:DM Mono,monospace;font-size:.7rem;color:'+c.listTs+';margin-bottom:5px">'+esc(ts)+'</div>'+
+    var h='<div style="font-family:DM Mono,monospace;font-size:.7rem;color:'+c.listTs+';margin-bottom:5px">'+esc(ts)+' <span style="opacity:.6">'+esc(tz)+'</span></div>'+
       '<div style="font-size:.93rem;font-weight:600;color:'+c.listDesc+';margin-bottom:3px">'+esc(e.desc)+levelHtml+'</div>'+
       '<div style="font-size:.77rem;color:'+c.listSys+'">'+esc(e.system||'')+(displayConfig.showActor&&e.actor?' &middot; '+esc(e.actor):'')+'</div>';
     if(displayConfig.showEventCode&&e.eventCode){
@@ -153,7 +154,8 @@ function renderTable(parent,sorted){
   // Header — first column is the expand-toggle column (no label)
   var thead=document.createElement('thead');
   var hrow=document.createElement('tr');
-  var hcols=['expand','Timestamp','Description','Level','System','Actor','Event Code','Integration Code'];
+  var tzHeader='Timestamp ('+getDisplayTZ()+')';
+  var hcols=['expand',tzHeader,'Description','Level','System','Actor','Event Code','Integration Code'];
   hcols.forEach(function(h){
     var th=document.createElement('th');
     th.textContent=h==='expand'?'':h; // expand column has no visible header text
