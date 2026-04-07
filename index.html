@@ -245,6 +245,30 @@
         <label class="tchk"><input type="checkbox" id="dc-show-seq" checked onchange="saveDisplayConfig()"> Seq #&nbsp;<span class="hint" style="margin-left:4px">(Flow)</span></label>
       </div>
       <div class="sep"></div>
+      <div class="sh"><span class="st">Timestamp Format</span></div>
+      <span class="hint">Choose how dates and times are displayed across all views.</span>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+        <div class="fg">
+          <label class="fl">Date Format</label>
+          <select id="dc-date-format" onchange="saveDisplayConfig()">
+            <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+            <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+            <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+            <option value="DD MMM YYYY">DD MMM YYYY</option>
+            <option value="MMM DD, YYYY">MMM DD, YYYY</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">Time Format</label>
+          <select id="dc-time-format" onchange="saveDisplayConfig()">
+            <option value="HH:mm:ss">HH:mm:ss (24-hour)</option>
+            <option value="HH:mm">HH:mm (24-hour, no seconds)</option>
+            <option value="h:mm:ss a">h:mm:ss am/pm</option>
+            <option value="h:mm a">h:mm am/pm</option>
+          </select>
+        </div>
+      </div>
+      <div class="sep"></div>
       <div class="sh"><span class="st">System Lane Order</span></div>
       <span class="hint">Assign a number to each system to control lane order in diagrams. Lower = first. Leave blank for alphabetical.</span>
       <div id="sys-order-list" style="display:flex;flex-direction:column;gap:6px;margin-top:2px"></div>

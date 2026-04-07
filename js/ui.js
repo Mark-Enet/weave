@@ -206,6 +206,10 @@ function saveDisplayConfig(){
   displayConfig.showActor=document.getElementById('dc-actor').checked;
   displayConfig.showDate=document.getElementById('dc-show-date').checked;
   displayConfig.showSeq=document.getElementById('dc-show-seq').checked;
+  displayConfig.dateFormat=document.getElementById('dc-date-format').value;
+  displayConfig.timeFormat=document.getElementById('dc-time-format').value;
+  localStorage.setItem('weave-date-format',displayConfig.dateFormat);
+  localStorage.setItem('weave-time-format',displayConfig.timeFormat);
   render();
 }
 function saveEvent(){
@@ -544,6 +548,8 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('dc-actor').checked=displayConfig.showActor;
   document.getElementById('dc-show-date').checked=displayConfig.showDate;
   document.getElementById('dc-show-seq').checked=displayConfig.showSeq;
+  document.getElementById('dc-date-format').value=displayConfig.dateFormat||'YYYY-MM-DD';
+  document.getElementById('dc-time-format').value=displayConfig.timeFormat||'HH:mm:ss';
   document.getElementById('about-modal').addEventListener('click',function(e){
     if(e.target===this) closeAbout();
   });
