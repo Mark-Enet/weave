@@ -1,5 +1,21 @@
 // ── UI ──────────────────────────────────────────────
 
+// FILE MENU (navbar)
+function fileMenuClick(){
+  var menu=document.getElementById('file-menu');
+  if(!menu) return;
+  if(menu.style.display==='block'){
+    fileMenuClose();
+  } else {
+    menu.style.display='block';
+  }
+}
+function fileMenuClose(){
+  var menu=document.getElementById('file-menu');
+  if(menu) menu.style.display='none';
+}
+
+
 // ABOUT MODAL
 function openAbout(){
   document.getElementById('about-version-num').textContent=APP_VERSION;
@@ -421,14 +437,45 @@ function renderActorsList(){
   });
 }
 
-function addSystem(){
-  var name=prompt('System / Context name:');
-  if(!name||!name.trim()) return;
-  name=name.trim();
-  if(!systemsRegistry.find(function(s){return s.name===name;}))
-    systemsRegistry.push({name:name,desc:'',order:undefined});
-  knownSys.add(name); refreshDL(); renderSystemsList();
+function toggleSysForm(){
+  var form=document.getElementById('sys-add-form');
+  if(!form) return;
+  var visible=form.style.display!=='none';
+  form.style.display=visible?'none':'';
+  if(!visible) setTimeout(function(){var n=document.getElementById('sys-add-name');if(n)n.focus();},50);
 }
+function saveNewSystem(){
+  var name=(document.getElementById('sys-add-name').value||'').trim();
+  var desc=(document.getElementById('sys-add-desc').value||'').trim();
+  if(!name){toast('Please enter a system name','\u26a0');return;}
+  if(!systemsRegistry.find(function(s){return s.name===name;}))
+    systemsRegistry.push({name:name,desc:desc,order:undefined});
+  knownSys.add(name);
+  document.getElementById('sys-add-name').value='';
+  document.getElementById('sys-add-desc').value='';
+  toggleSysForm();
+  refreshDL(); renderSystemsList();
+}
+function addSystem(){toggleSysForm();}
+
+function toggleActorForm(){
+  var form=document.getElementById('actor-add-form');
+  if(!form) return;
+  var visible=form.style.display!=='none';
+  form.style.display=visible?'none':'';
+  if(!visible) setTimeout(function(){var n=document.getElementById('actor-add-name');if(n)n.focus();},50);
+}
+function saveNewActor(){
+  var name=(document.getElementById('actor-add-name').value||'').trim();
+  var desc=(document.getElementById('actor-add-desc').value||'').trim();
+  if(!name){toast('Please enter an actor name','\u26a0');return;}
+  actorsRegistry.push({name:name,desc:desc});
+  document.getElementById('actor-add-name').value='';
+  document.getElementById('actor-add-desc').value='';
+  toggleActorForm();
+  renderActorsList(); refreshActorDL();
+}
+function addActor(){toggleActorForm();}
 function deleteSystem(name){
   if(!confirm('Remove "'+name+'" from the registry? (Does not delete events using it.)')) return;
   systemsRegistry=systemsRegistry.filter(function(s){return s.name!==name;});
@@ -445,14 +492,6 @@ function setSysDesc(name,val){
   var reg=systemsRegistry.find(function(s){return s.name===name;});
   if(!reg){reg={name:name,order:undefined};systemsRegistry.push(reg);}
   reg.desc=val;
-}
-function addActor(){
-  var name=prompt('Actor / Component name:');
-  if(!name||!name.trim()) return;
-  actorsRegistry.push({name:name.trim(),desc:''});
-  renderActorsList();
-  // Refresh actor datalist
-  refreshActorDL();
 }
 function deleteActor(i){
   actorsRegistry.splice(i,1); renderActorsList(); refreshActorDL();
@@ -479,5 +518,14 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('dc-show-seq').checked=displayConfig.showSeq;
   document.getElementById('about-modal').addEventListener('click',function(e){
     if(e.target===this) closeAbout();
+  });
+  // Close file menu when clicking outside
+  document.addEventListener('click',function(e){
+    var menu=document.getElementById('file-menu');
+    if(!menu) return;
+    var btn=document.getElementById('file-menu-btn');
+    if(menu.style.display==='block'&&!menu.contains(e.target)&&btn&&!btn.contains(e.target)){
+      fileMenuClose();
+    }
   });
 });
