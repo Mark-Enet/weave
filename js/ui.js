@@ -223,7 +223,6 @@ function saveEvent(){
     managedIntegrationCode:(document.getElementById('managed-integration-code').value||'').trim()||null,
     timestamp:ts,timestampStr:tsStr,interactions:ints,mode:appMode
   };
-  if(ev.level&&levelsRegistry.indexOf(ev.level)===-1) levelsRegistry.push(ev.level);
   if(editIdx>=0){events[editIdx]=ev;toast('Event updated','\u270f');}
   else{events.push(ev);toast('Event saved','\u2713');}
   refreshDL(); clearForm(); render(); updateList(); refreshFilterBar(); refreshLevelDL();
@@ -282,7 +281,7 @@ function updateList(){
     var ri=events.indexOf(e), div=document.createElement('div');
     div.className='eitem'+(ri===editIdx?' sel':'');
     var meta='<span class="etag">'+esc(e.system||'?')+'</span>';
-    if(e.level) meta+='<span class="etag elevel-'+esc(e.level)+'">'+esc(e.level)+'</span>';
+    if(e.level) meta+='<span class="etag elevel-'+esc(e.level)+'">'+(LEVEL_LABELS[e.level]||esc(e.level))+'</span>';
     if(appMode==='timeline'&&e.timestamp) meta+='<span class="etag">'+new Date(e.timestamp).toISOString().slice(11,19)+'</span>';
     if(appMode==='flow') meta+='<span class="etag">#'+(si+1)+'</span>';
     if(e.actor) meta+='<span class="etag">'+esc(e.actor)+'</span>';
@@ -466,12 +465,7 @@ function refreshActorDL(){
   dl.innerHTML='';
   actorsRegistry.forEach(function(a){var o=document.createElement('option');o.value=a.name;dl.appendChild(o);});
 }
-function refreshLevelDL(){
-  var dl=document.getElementById('level-dl');
-  if(!dl) return;
-  dl.innerHTML='';
-  levelsRegistry.forEach(function(l){var o=document.createElement('option');o.value=l;dl.appendChild(o);});
-}
+function refreshLevelDL(){} // levels are fixed; select dropdown is static
 // INIT
 document.addEventListener('DOMContentLoaded',function(){
   applyStoredTheme();
