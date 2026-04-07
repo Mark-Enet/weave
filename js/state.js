@@ -43,6 +43,25 @@ function svgColors(){
   };
 }
 
+// TIMEZONE
+var _displayTZ='';
+function getDisplayTZ(){
+  if(!_displayTZ){
+    var stored=localStorage.getItem('weave-timezone');
+    _displayTZ=stored||(Intl&&Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:'')||'UTC';
+  }
+  return _displayTZ;
+}
+// Returns the offset in ms between UTC and the given timezone at the given UTC date.
+// Positive means the TZ is behind UTC (e.g. UTC-5 → +18000000).
+function _tzOffsetMs(utcDate,tz){
+  var parts=new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',
+    hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(utcDate);
+  var p={}; parts.forEach(function(pt){p[pt.type]=pt.value;});
+  var tzAsUTC=new Date(p.year+'-'+p.month+'-'+p.day+'T'+p.hour+':'+p.minute+':'+p.second+'Z');
+  return utcDate.getTime()-tzAsUTC.getTime();
+}
+
 // UTILS
 function toast(msg,icon){
   document.getElementById('tmsg').textContent=msg;
@@ -53,19 +72,36 @@ function toast(msg,icon){
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function initials(s){return (s||'?').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,3);}
 function trunc(s,n){s=s||'';return s.length>n?s.slice(0,n-1)+'\u2026':s;}
+// Format a UTC ms timestamp for display using the currently selected timezone.
 function fmtTs(ms,showDate){
-  var d=new Date(ms), date=d.toISOString().slice(0,10), time=d.toISOString().slice(11,19);
-  return showDate?date+' '+time:time;
+  var tz=getDisplayTZ();
+  var parts=new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',
+    hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(new Date(ms));
+  var p={}; parts.forEach(function(pt){p[pt.type]=pt.value;});
+  var time=p.hour+':'+p.minute+':'+p.second;
+  return showDate?p.year+'-'+p.month+'-'+p.day+' '+time:time;
 }
-function fromDTL(v){return v?new Date(v).getTime():null;}
+// Interpret a datetime-local string as a wall-clock time in the display timezone and return UTC ms.
+function fromDTL(v){
+  if(!v) return null;
+  var tz=getDisplayTZ();
+  if(tz==='UTC') return new Date(v+'Z').getTime();
+  // First-pass: treat the string as UTC to get a rough epoch for offset lookup
+  var approx=new Date(v+'Z');
+  var off1=_tzOffsetMs(approx,tz);
+  // Second-pass: apply the offset to get a better epoch, then recompute (handles DST boundary)
+  var off2=_tzOffsetMs(new Date(approx.getTime()+off1),tz);
+  return approx.getTime()+off2;
+}
+// Convert a UTC ISO string to a datetime-local value showing the time in the display timezone.
 function toDTL(iso){
   if(!iso) return '';
   var d=new Date(iso);
-  // Adjust UTC time to local time so datetime-local input displays correctly.
-  // getTimezoneOffset() returns (UTC - local) in minutes; subtracting it shifts
-  // the UTC epoch into a "fake UTC" value that toISOString() will render as
-  // local clock time — which is what the datetime-local input expects.
-  return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,19);
+  var tz=getDisplayTZ();
+  var parts=new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',
+    hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(d);
+  var p={}; parts.forEach(function(pt){p[pt.type]=pt.value;});
+  return p.year+'-'+p.month+'-'+p.day+'T'+p.hour+':'+p.minute+':'+p.second;
 }
 
 // SYSTEM ARRAY — sorted by sysOrder, then alphabetically

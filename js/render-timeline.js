@@ -178,6 +178,13 @@ function renderTimeline(parent,sorted,orientation){
   var svg=mkSVG(W,H), rid=svg._rid, g=sv('g',{transform:'translate('+mg.left+','+mg.top+')'});
   svg.appendChild(g);
   var showDate=displayConfig.showDate;
+  // timezone indicator — shown near the time axis corner
+  var tzLabel=getDisplayTZ();
+  if(isH){
+    aT(g,-10,-10,tzLabel,{'text-anchor':'end','font-size':'10','fill':svgColors().label,'font-family':'DM Mono,monospace','opacity':'.75'});
+  }else{
+    aT(g,-10,-40,tzLabel,{'text-anchor':'end','font-size':'10','fill':svgColors().label,'font-family':'DM Mono,monospace','opacity':'.75'});
+  }
   // grid ticks — one per unique event timestamp so each event node aligns with
   // a labelled gridline showing its exact time (not a linear interpolation).
   var tsSeen={};

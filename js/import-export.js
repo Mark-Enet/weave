@@ -6,7 +6,8 @@ function exportData(){
               orientation:document.getElementById('orientation').value,
               showDate:displayConfig.showDate,
               flowDirection:document.getElementById('flow-dir').value,
-              showSeq:displayConfig.showSeq},events:events};
+              showSeq:displayConfig.showSeq,
+              timezone:getDisplayTZ()},events:events};
   var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   var url=URL.createObjectURL(blob), a=document.createElement('a'); a.href=url;
   a.download=(scenName||'eventflow')+'-'+appMode+'-'+new Date().toISOString().slice(0,10)+'.json';

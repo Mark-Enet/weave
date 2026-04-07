@@ -298,7 +298,7 @@ function updateList(){
     div.className='eitem'+(ri===editIdx?' sel':'');
     var meta='<span class="etag">'+esc(e.system||'?')+'</span>';
     if(e.level) meta+='<span class="etag elevel-'+esc(e.level)+'">'+(LEVEL_LABELS[e.level]||esc(e.level))+'</span>';
-    if(appMode==='timeline'&&e.timestamp) meta+='<span class="etag">'+new Date(e.timestamp).toISOString().slice(11,19)+'</span>';
+    if(appMode==='timeline'&&e.timestamp) meta+='<span class="etag">'+fmtTs(e.timestamp,false)+'</span>';
     if(appMode==='flow') meta+='<span class="etag">#'+(si+1)+'</span>';
     if(e.actor) meta+='<span class="etag">'+esc(e.actor)+'</span>';
     var dragHandle=appMode==='flow'?'<span class="drag-handle" title="Drag to reorder">&#x2630;</span>':'';
@@ -505,9 +505,37 @@ function refreshActorDL(){
   actorsRegistry.forEach(function(a){var o=document.createElement('option');o.value=a.name;dl.appendChild(o);});
 }
 function refreshLevelDL(){} // levels are fixed; select dropdown is static
+// TIMEZONE SELECTOR
+function initTimezone(){
+  var tz=localStorage.getItem('weave-timezone')||(Intl&&Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:'')||'UTC';
+  _displayTZ=tz;
+  var sel=document.getElementById('tz-select');
+  if(!sel) return;
+  var zones=[];
+  try{if(Intl.supportedValuesOf) zones=Intl.supportedValuesOf('timeZone');}catch(e){}
+  if(!zones.length) zones=['UTC'];
+  sel.innerHTML='';
+  zones.forEach(function(z){var o=document.createElement('option');o.value=z;o.textContent=z;sel.appendChild(o);});
+  sel.value=tz;
+}
+function setDisplayTZ(tz){
+  _displayTZ=tz;
+  localStorage.setItem('weave-timezone',tz);
+  render(); updateList();
+}
+function resetToMyTZ(){
+  var myTZ=(Intl&&Intl.DateTimeFormat?Intl.DateTimeFormat().resolvedOptions().timeZone:'')||'UTC';
+  _displayTZ=myTZ;
+  localStorage.setItem('weave-timezone',myTZ);
+  var sel=document.getElementById('tz-select');
+  if(sel) sel.value=myTZ;
+  render(); updateList();
+}
+
 // INIT
 document.addEventListener('DOMContentLoaded',function(){
   applyStoredTheme();
+  initTimezone();
   switchAppMode('timeline'); refreshDL(); refreshActorDL(); refreshLevelDL(); updateList(); render();
   initLegend();
   document.getElementById('dc-level').checked=displayConfig.showLevel;

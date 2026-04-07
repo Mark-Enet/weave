@@ -262,6 +262,7 @@ html.dark .elevel-debug{background:rgba(136,153,200,.12);color:#99aacc}
   padding:4px 9px;border-radius:7px;font-size:.78rem;font-family:'DM Sans',sans-serif;
   outline:none;cursor:pointer;transition:background .25s}
 .tsel:focus{border-color:var(--accent)}
+.tz-select{max-width:180px;text-overflow:ellipsis}
 .tchk{display:flex;align-items:center;gap:5px;font-size:.78rem;color:var(--text2);
   cursor:pointer;white-space:nowrap}
 .tchk input{accent-color:var(--accent);cursor:pointer}
