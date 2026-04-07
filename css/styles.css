@@ -151,7 +151,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .sidebar-tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface2);transition:background .25s}
 .sidebar-tab{flex:1;padding:11px 4px;font-family:'Nunito',sans-serif;font-size:.73rem;font-weight:700;
   text-align:center;cursor:pointer;background:transparent;border:none;color:var(--text3);
-  border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.04em;text-transform:uppercase}
+  border-bottom:2px solid transparent;transition:all .2s;letter-spacing:.04em;text-transform:uppercase;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sidebar-tab:hover{color:var(--text2)}
 .sidebar-tab.active{color:var(--accent);border-bottom-color:var(--accent);background:rgba(232,96,74,.04)}
 .sidebar-panel{display:none;flex-direction:column;overflow-y:auto;flex:1;padding:18px;gap:14px}
@@ -305,6 +306,11 @@ html.dark .elevel-debug{background:rgba(136,153,200,.12);color:#99aacc}
   display:flex;align-items:center;gap:9px}
 .toast.show{opacity:1;transform:translateY(0)}
 .sep{height:1px;background:var(--sep);margin:2px 0}
+
+/* ── INLINE ADD FORM (systems/actors) ───────────────── */
+.inline-add-form{background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:11px;display:flex;flex-direction:column;gap:8px;
+  margin-top:4px;border-left:3px solid var(--accent2)}
 /* ── DRAG AND DROP ───────────────────────────────────── */
 .eitem.dragging{opacity:.4}
 .eitem.drag-over{border-color:var(--accent);background:rgba(232,96,74,.1)}
