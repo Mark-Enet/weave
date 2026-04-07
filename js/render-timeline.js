@@ -241,9 +241,9 @@ function renderTimeline(parent,sorted,orientation){
       var ic=inter.nature==='push'?svgColors().accent:inter.nature==='pull'?svgColors().teal:svgColors().proc;
       var sx,sy,tx,ty;
       if(inter.nature==='pull'){
-        // Pull: data flows FROM target lane TO source lane, forward in time
+        // Pull: arrow points FROM target lane TO originating event
         sx=isH?tp:tLane; sy=isH?tLane:tp;
-        tx=isH?tTP:bp;   ty=isH?bp:tTP;
+        tx=isH?tp:bp;    ty=isH?bp:tp;
       } else {
         sx=isH?tp:bp; sy=isH?bp:tp;
         tx=isH?tTP:tLane; ty=isH?tLane:tTP;
