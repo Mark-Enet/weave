@@ -10,7 +10,9 @@ var LEVEL_LABELS={info:'Info',warning:'Warning',error:'Error',debug:'Debug',comm
 var levelsRegistry=FIXED_LEVELS.slice(); // fixed event levels
 function normalizeLevel(val){var v=(val||'').toString().trim().toLowerCase();if(!v)return '';return FIXED_LEVELS.indexOf(v)!==-1?v:'other';}
 var knownSys=new Set();
-var displayConfig={showLevel:true,showEventCode:true,showManagedIntegrationCode:true,showActor:true,showDate:true,showSeq:true};
+var displayConfig={showLevel:true,showEventCode:true,showManagedIntegrationCode:true,showActor:true,showDate:true,showSeq:true,
+  dateFormat:localStorage.getItem('weave-date-format')||'YYYY-MM-DD',
+  timeFormat:localStorage.getItem('weave-time-format')||'HH:mm:ss'};
 var filterConfig={text:'',systems:[],actors:[],levels:[],eventCodes:[],integrationCodes:[]};
 var COLORS_L=['#e8604a','#3cbfbf','#f5a623','#7755cc','#c04535','#2a9d8f','#e76f51'];
 var COLORS_D=['#f07060','#45d0d0','#f5b030','#8888cc','#e05050','#35b8b8','#f09070'];
@@ -72,14 +74,39 @@ function toast(msg,icon){
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function initials(s){return (s||'?').split(' ').map(function(w){return w[0]||'';}).join('').toUpperCase().slice(0,3);}
 function trunc(s,n){s=s||'';return s.length>n?s.slice(0,n-1)+'\u2026':s;}
-// Format a UTC ms timestamp for display using the currently selected timezone.
+// Format a UTC ms timestamp for display using the currently selected timezone and format options.
 function fmtTs(ms,showDate){
   var tz=getDisplayTZ();
+  var df=displayConfig.dateFormat||'YYYY-MM-DD';
+  var tf=displayConfig.timeFormat||'HH:mm:ss';
+  var d=new Date(ms);
   var parts=new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',
-    hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(new Date(ms));
+    hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).formatToParts(d);
   var p={}; parts.forEach(function(pt){p[pt.type]=pt.value;});
-  var time=p.hour+':'+p.minute+':'+p.second;
-  return showDate?p.year+'-'+p.month+'-'+p.day+' '+time:time;
+  // Month abbreviation for named-month formats
+  var mabbr='';
+  if(df==='DD MMM YYYY'||df==='MMM DD, YYYY'){
+    var mparts=new Intl.DateTimeFormat('en-US',{timeZone:tz,month:'short'}).formatToParts(d);
+    mparts.forEach(function(pt){if(pt.type==='month') mabbr=pt.value;});
+  }
+  // Build date string
+  var dateStr;
+  if(df==='MM/DD/YYYY') dateStr=p.month+'/'+p.day+'/'+p.year;
+  else if(df==='DD/MM/YYYY') dateStr=p.day+'/'+p.month+'/'+p.year;
+  else if(df==='DD MMM YYYY') dateStr=p.day+' '+mabbr+' '+p.year;
+  else if(df==='MMM DD, YYYY') dateStr=mabbr+' '+p.day+', '+p.year;
+  else dateStr=p.year+'-'+p.month+'-'+p.day;
+  // Build time string
+  var timeStr, h24=parseInt(p.hour,10), ampm, h12;
+  if(tf==='h:mm:ss a'||tf==='h:mm a'){
+    ampm=h24>=12?'pm':'am'; h12=h24%12||12;
+    timeStr=tf==='h:mm a'?(h12+':'+p.minute+' '+ampm):(h12+':'+p.minute+':'+p.second+' '+ampm);
+  }else if(tf==='HH:mm'){
+    timeStr=p.hour+':'+p.minute;
+  }else{
+    timeStr=p.hour+':'+p.minute+':'+p.second;
+  }
+  return showDate?dateStr+' '+timeStr:timeStr;
 }
 // Interpret a datetime-local string as a wall-clock time in the display timezone and return UTC ms.
 function fromDTL(v){
