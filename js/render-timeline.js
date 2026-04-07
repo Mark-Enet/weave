@@ -241,9 +241,9 @@ function renderTimeline(parent,sorted,orientation){
       var ic=inter.nature==='push'?svgColors().accent:inter.nature==='pull'?svgColors().teal:svgColors().proc;
       var sx,sy,tx,ty;
       if(inter.nature==='pull'){
-        // Pull: arrow points FROM target lane TO originating event
-        sx=isH?tp:tLane; sy=isH?tLane:tp;
-        tx=isH?tp:bp;    ty=isH?bp:tp;
+        // Pull: arrow points FROM target lane TO originating event; tTP displaces the far end by delay
+        sx=isH?tTP:tLane; sy=isH?tLane:tTP;
+        tx=isH?tp:bp;     ty=isH?bp:tp;
       } else {
         sx=isH?tp:bp; sy=isH?bp:tp;
         tx=isH?tTP:tLane; ty=isH?tLane:tTP;
