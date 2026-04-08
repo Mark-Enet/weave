@@ -214,6 +214,14 @@ function renderFlow(parent,direction,showSeq,filteredEvents){
       ey+=13;
       if(ev.managedIntegrationCode) aT(g,tx,ey,trunc(ev.managedIntegrationCode,22),{'font-size':'8','fill':svgColors().listInt,'font-family':'DM Mono,monospace'});
     }
+    // Transparent click overlay — loads event into editor
+    var hitRect=sv('rect',{x:bx,y:by,width:BW,height:BH,rx:9,fill:'transparent',cursor:'pointer'});
+    hitRect.addEventListener('click',(function(id){return function(ev2){
+      ev2.stopPropagation();
+      var idx=findEventByIdIdx(id);
+      if(idx>=0) editEvent(idx);
+    };})(evId));
+    g.appendChild(hitRect);
   });
   parent.appendChild(svg);
 }

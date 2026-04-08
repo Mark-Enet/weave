@@ -148,6 +148,9 @@ function getSysArray(sySet){
 // ENSURE IDS
 function ensureIds(){events.forEach(function(ev,i){if(!ev._id) ev._id='evt-'+Date.now()+'-'+i;});}
 
+// Find index in events[] by _id
+function findEventByIdIdx(id){for(var i=0;i<events.length;i++){if(events[i]._id===id) return i;}return -1;}
+
 // ACTIVE (FILTERED) EVENTS
 function getActiveEvents(){
   var q=(filterConfig.text||'').trim().toLowerCase();

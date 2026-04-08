@@ -547,6 +547,18 @@
   </div>
 </div>
 
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-card confirm-card" role="dialog" aria-modal="true" aria-label="Confirm action">
+    <h3 class="confirm-title" id="confirm-title">Confirm</h3>
+    <p class="confirm-msg" id="confirm-msg"></p>
+    <div class="confirm-btns">
+      <button class="btn btn-s" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-d" id="confirm-ok-btn" onclick="acceptConfirm()">Confirm</button>
+    </div>
+  </div>
+</div>
+
 <script src="js/state.js"></script>
 <script src="js/render.js"></script>
 <script src="js/render-timeline.js"></script>

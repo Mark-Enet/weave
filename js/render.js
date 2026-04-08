@@ -210,14 +210,15 @@ function renderTable(parent,sorted){
 
   // Column definitions: key, header label, sort field, default width (px)
   var COLS=[
-    {key:'expand', label:'',                 sortKey:null,                     def:26 },
-    {key:'ts',     label:'Timestamp ('+tz+')',sortKey:'timestamp',             def:160},
-    {key:'desc',   label:'Description',       sortKey:'desc',                  def:280},
-    {key:'level',  label:'Level',             sortKey:'level',                 def:80 },
-    {key:'sys',    label:'System',            sortKey:'system',                def:140},
-    {key:'actor',  label:'Actor',             sortKey:'actor',                 def:120},
-    {key:'ec',     label:'Event Code',        sortKey:'eventCode',             def:120},
-    {key:'ic',     label:'Integration Code',  sortKey:'managedIntegrationCode',def:140},
+    {key:'sel',    label:'',                  sortKey:null,                     def:32 },
+    {key:'expand', label:'',                  sortKey:null,                     def:26 },
+    {key:'ts',     label:'Timestamp ('+tz+')',sortKey:'timestamp',              def:160},
+    {key:'desc',   label:'Description',        sortKey:'desc',                  def:280},
+    {key:'level',  label:'Level',              sortKey:'level',                 def:80 },
+    {key:'sys',    label:'System',             sortKey:'system',                def:140},
+    {key:'actor',  label:'Actor',              sortKey:'actor',                 def:120},
+    {key:'ec',     label:'Event Code',         sortKey:'eventCode',             def:120},
+    {key:'ic',     label:'Integration Code',   sortKey:'managedIntegrationCode',def:140},
   ];
 
   // Load saved column widths from localStorage
@@ -239,6 +240,51 @@ function renderTable(parent,sorted){
       if(av>bv) return tableSortDir==='asc'?1:-1;
       return 0;
     });
+  }
+
+  // Selection action bar
+  var selCount=0;
+  rows.forEach(function(e){if(tableSelection.has(e._id)) selCount++;});
+  if(selCount>0){
+    var selBar=document.createElement('div');
+    selBar.className='tbl-sel-bar';
+    var selLabel=document.createElement('span');
+    selLabel.className='tbl-sel-count';
+    selLabel.textContent=selCount+' selected';
+    var delSelBtn=document.createElement('button');
+    delSelBtn.className='btn btn-d btn-sm';
+    delSelBtn.textContent='\uD83D\uDDD1 Delete Selected';
+    delSelBtn.onclick=function(){
+      var ids=[...tableSelection];
+      showConfirm(
+        'Delete '+ids.length+' selected event'+(ids.length!==1?'s':'')+' ? This cannot be undone.',
+        function(){
+          var editEvId=editIdx>=0&&events[editIdx]?events[editIdx]._id:'';
+          var editWasDeleted=editEvId&&tableSelection.has(editEvId);
+          var remaining=events.filter(function(ev){return !tableSelection.has(ev._id);});
+          events.length=0; remaining.forEach(function(ev){events.push(ev);});
+          tableSelection.clear();
+          if(editWasDeleted){
+            clearForm();
+          } else if(editEvId){
+            editIdx=findEventByIdIdx(editEvId);
+            if(editIdx<0) clearForm();
+          }
+          render(); updateList(); refreshFilterBar();
+          toast('Deleted '+ids.length+' event'+(ids.length!==1?'s':''),'\uD83D\uDDD1');
+        },
+        'Delete '+ids.length,
+        'Delete Selected Events'
+      );
+    };
+    var clearSelBtn=document.createElement('button');
+    clearSelBtn.className='btn btn-s btn-sm';
+    clearSelBtn.textContent='Clear selection';
+    clearSelBtn.onclick=function(){tableSelection.clear();render();};
+    selBar.appendChild(selLabel);
+    selBar.appendChild(delSelBtn);
+    selBar.appendChild(clearSelBtn);
+    parent.appendChild(selBar);
   }
 
   var wrap=document.createElement('div');
@@ -266,7 +312,23 @@ function renderTable(parent,sorted){
       'color:'+c.label+';border-bottom:2px solid '+c.grid+';white-space:nowrap;text-transform:uppercase;letter-spacing:.06em;'+
       'position:relative;user-select:none;overflow:hidden;box-sizing:border-box';
 
-    if(col.label){
+    if(col.key==='sel'){
+      // Select-all checkbox
+      var chkAll=document.createElement('input');
+      chkAll.type='checkbox';
+      chkAll.title='Select all';
+      chkAll.style.cssText='cursor:pointer;accent-color:var(--accent)';
+      var allIds=rows.map(function(r){return r._id;});
+      chkAll.checked=allIds.length>0&&allIds.every(function(id){return tableSelection.has(id);});
+      chkAll.indeterminate=!chkAll.checked&&allIds.some(function(id){return tableSelection.has(id);});
+      chkAll.onchange=function(e2){
+        e2.stopPropagation();
+        if(chkAll.checked) allIds.forEach(function(id){tableSelection.add(id);});
+        else allIds.forEach(function(id){tableSelection.delete(id);});
+        render();
+      };
+      th.appendChild(chkAll);
+    } else if(col.label){
       if(col.sortKey){
         // Sortable header
         th.style.cursor='pointer';
@@ -300,8 +362,8 @@ function renderTable(parent,sorted){
       }
     }
 
-    // Resize handle (not on expand column or last column)
-    if(col.key!=='expand' && ci<COLS.length-1){
+    // Resize handle (not on sel/expand columns or last column)
+    if(col.key!=='sel' && col.key!=='expand' && ci<COLS.length-1){
       var rh=document.createElement('div');
       rh.className='tbl-rh';
       rh.style.cssText='position:absolute;top:0;right:0;width:5px;height:100%;cursor:col-resize;z-index:2';
@@ -349,11 +411,35 @@ function renderTable(parent,sorted){
   rows.forEach(function(e,idx){
     var hasInts=(e.interactions||[]).length>0;
     var rowId='tbl-row-'+(e._id||idx);
+    var isSel=tableSelection.has(e._id);
     var isOdd=idx%2===1;
-    var rowBg=isOdd?c.laneAlt:'transparent';
+    var rowBg=isSel?'':(isOdd?c.laneAlt:'transparent');
 
     var tr=document.createElement('tr');
-    tr.style.cssText='border-bottom:1px solid '+c.grid+';background:'+rowBg;
+    tr.style.cssText='border-bottom:1px solid '+c.grid+';background:'+rowBg+';cursor:pointer';
+    if(isSel) tr.classList.add('tbl-row-sel');
+
+    // Row click → edit event (ignore clicks on interactive elements)
+    tr.addEventListener('click',(function(evId){return function(ev){
+      if(ev.target.tagName==='INPUT'||ev.target.tagName==='BUTTON') return;
+      var evIdx=findEventByIdIdx(evId);
+      if(evIdx>=0) editEvent(evIdx);
+    };})(e._id));
+
+    // Checkbox cell
+    var tdSel=document.createElement('td');
+    tdSel.style.cssText='padding:8px 6px;text-align:center;overflow:hidden';
+    var chk=document.createElement('input');
+    chk.type='checkbox';
+    chk.checked=isSel;
+    chk.style.cssText='cursor:pointer;accent-color:var(--accent)';
+    chk.onchange=(function(evId){return function(ev2){
+      ev2.stopPropagation();
+      if(chk.checked) tableSelection.add(evId); else tableSelection.delete(evId);
+      render();
+    };})(e._id);
+    tdSel.appendChild(chk);
+    tr.appendChild(tdSel);
 
     // Expand toggle cell (interactions)
     var tdTgl=document.createElement('td');
@@ -365,7 +451,8 @@ function renderTable(parent,sorted){
       btn.style.cssText='background:none;border:1px solid '+c.accent+';color:'+c.accent+
         ';border-radius:4px;width:20px;height:20px;cursor:pointer;font-size:.8rem;line-height:1;padding:0;'+
         'display:inline-flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0';
-      btn.onclick=(function(id,b){return function(){
+      btn.onclick=(function(id,b){return function(ev2){
+        ev2.stopPropagation();
         var sub=document.getElementById(id+'-sub');
         if(!sub) return;
         var open=sub.style.display!=='none';

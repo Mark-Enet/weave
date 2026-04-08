@@ -445,3 +445,17 @@ html.dark .elevel-debug{background:rgba(136,153,200,.12);color:#99aacc}
 .ds-result-actor{font-size:.67rem;color:var(--text3);font-family:'DM Mono',monospace}
 .ds-result-ts{font-size:.66rem;color:var(--text3);margin-left:auto}
 .ds-add-btn{align-self:flex-start;margin-top:2px}
+
+/* ── CONFIRM MODAL ───────────────────────────────────── */
+.confirm-card{max-width:360px;text-align:center}
+.confirm-title{font-family:'Nunito',sans-serif;font-size:1.05rem;font-weight:800;color:var(--text);margin:0 0 10px}
+.confirm-msg{font-size:.88rem;color:var(--text2);margin:0 0 22px;line-height:1.55}
+.confirm-btns{display:flex;gap:10px;justify-content:center}
+
+/* ── TABLE SELECTION ─────────────────────────────────── */
+.tbl-sel-bar{display:flex;align-items:center;gap:10px;padding:7px 12px;
+  background:var(--surface2);border-bottom:1px solid var(--border);
+  font-size:.8rem;color:var(--text2);flex-shrink:0}
+.tbl-sel-count{font-family:'DM Mono',monospace;font-weight:700;color:var(--accent)}
+.tbl-row-sel{background:rgba(232,96,74,.07)!important}
+html.dark .tbl-row-sel{background:rgba(240,112,96,.07)!important}
