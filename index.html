@@ -31,6 +31,12 @@
         <path d="M8 12h1M15 12h1M12 9V8M12 15v1"/>
       </svg>Flow
     </button>
+    <button class="mode-tab" id="banner-tab-table" onclick="switchAppMode('table')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="18" height="18" rx="1"/>
+        <path d="M3 9h18M3 15h18M9 3v18"/>
+      </svg>Table
+    </button>
   </div>
   <div class="banner-actions">
     <!-- File menu: groups Import / Export / Clear All -->
@@ -392,12 +398,6 @@
       <div id="mode-badge"></div>
       <div class="tdiv"></div>
       <div id="tl-ctrl" style="display:flex;align-items:center;gap:10px">
-        <span class="tlbl">View</span>
-        <select class="tsel" id="view-mode" onchange="render()">
-          <option value="multi">Multi-lane</option>
-          <option value="single">List</option>
-          <option value="table">Table</option>
-        </select>
         <span class="tlbl">Orientation</span>
         <select class="tsel" id="orientation" onchange="render()">
           <option value="vertical">Vertical</option>

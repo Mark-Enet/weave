@@ -99,12 +99,11 @@ function render(){
     if(typeof updateLegendColors==='function') updateLegendColors();
     return;
   }
-  if(appMode==='timeline'){
-    var sorted=[...active].sort(function(a,b){return(a.timestamp||0)-(b.timestamp||0);});
-    var vm=document.getElementById('view-mode').value;
-    if(vm==='single') renderList(ca,sorted);
-    else if(vm==='table') renderTable(ca,sorted);
-    else renderTimeline(ca,sorted,document.getElementById('orientation').value);
+  var sorted=[...active].sort(function(a,b){return(a.timestamp||0)-(b.timestamp||0);});
+  if(appMode==='table'){
+    renderTable(ca,sorted);
+  } else if(appMode==='timeline'){
+    renderTimeline(ca,sorted,document.getElementById('orientation').value);
   }else{
     renderFlow(ca,document.getElementById('flow-dir').value,displayConfig.showSeq,active);
   }
