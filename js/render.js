@@ -115,16 +115,17 @@ function render(){
 }
 
 // ── DIAGRAM ZOOM ─────────────────────────────────────────
+var ZOOM_MIN=0.05, ZOOM_MAX=5, ZOOM_STEP=1.2, ZOOM_WHEEL_STEP=1.1;
 function _getSvg(){return document.querySelector('#chart>svg');}
 function applyDiagramZoom(z){
-  diagramZoom=z;
+  diagramZoom=Math.max(ZOOM_MIN,Math.min(ZOOM_MAX,z));
   var svg=_getSvg(); if(!svg) return;
   var natW=parseFloat(svg.getAttribute('data-nat-w'));
   var natH=parseFloat(svg.getAttribute('data-nat-h'));
-  svg.setAttribute('width',natW*z);
-  svg.setAttribute('height',natH*z);
+  svg.setAttribute('width',natW*diagramZoom);
+  svg.setAttribute('height',natH*diagramZoom);
   var zd=document.getElementById('zoom-level');
-  if(zd) zd.textContent=Math.round(z*100)+'%';
+  if(zd) zd.textContent=Math.round(diagramZoom*100)+'%';
 }
 function getDiagramFitZoom(){
   var vp=document.querySelector('.cvport'), svg=_getSvg();
@@ -141,8 +142,8 @@ function zoomToNormal(){
   applyDiagramZoom(1.0);
   var vp=document.querySelector('.cvport'); if(vp){vp.scrollTop=0;vp.scrollLeft=0;}
 }
-function zoomIn(){applyDiagramZoom(Math.min(5,diagramZoom*1.2));}
-function zoomOut(){applyDiagramZoom(Math.max(0.05,diagramZoom/1.2));}
+function zoomIn(){applyDiagramZoom(diagramZoom*ZOOM_STEP);}
+function zoomOut(){applyDiagramZoom(diagramZoom/ZOOM_STEP);}
 function _setupWheelZoom(){
   var vp=document.querySelector('.cvport');
   if(!vp||vp._wzBound) return;
@@ -151,8 +152,8 @@ function _setupWheelZoom(){
     var svg=_getSvg(); if(!svg||appMode==='table') return;
     e.preventDefault();
     var oldZ=diagramZoom;
-    var factor=e.deltaY<0?1.1:(1/1.1);
-    var newZ=Math.max(0.05,Math.min(5,oldZ*factor));
+    var factor=e.deltaY<0?ZOOM_WHEEL_STEP:(1/ZOOM_WHEEL_STEP);
+    var newZ=Math.max(ZOOM_MIN,Math.min(ZOOM_MAX,oldZ*factor));
     // Focal point: mouse position mapped to SVG natural coordinates
     var svgRect=svg.getBoundingClientRect();
     var vpRect=vp.getBoundingClientRect();
