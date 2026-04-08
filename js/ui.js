@@ -366,7 +366,7 @@ function saveScenario(){
 }
 function clearAll(){
   showConfirm('Delete ALL events? This cannot be undone.',function(){
-    events=[]; editIdx=-1; tableSelection=new Set(); clearForm(); clearFilters(); render(); updateList(); toast('Cleared','X');
+    events=[]; editIdx=-1; tableSelection.clear(); clearForm(); clearFilters(); render(); updateList(); toast('Cleared','X');
   },'Delete All','Delete All Events');
 }
 

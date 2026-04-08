@@ -263,7 +263,7 @@ function renderTable(parent,sorted){
           var editWasDeleted=editEvId&&tableSelection.has(editEvId);
           var remaining=events.filter(function(ev){return !tableSelection.has(ev._id);});
           events.length=0; remaining.forEach(function(ev){events.push(ev);});
-          tableSelection=new Set();
+          tableSelection.clear();
           if(editWasDeleted){
             clearForm();
           } else if(editEvId){
@@ -280,7 +280,7 @@ function renderTable(parent,sorted){
     var clearSelBtn=document.createElement('button');
     clearSelBtn.className='btn btn-s btn-sm';
     clearSelBtn.textContent='Clear selection';
-    clearSelBtn.onclick=function(){tableSelection=new Set();render();};
+    clearSelBtn.onclick=function(){tableSelection.clear();render();};
     selBar.appendChild(selLabel);
     selBar.appendChild(delSelBtn);
     selBar.appendChild(clearSelBtn);
