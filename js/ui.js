@@ -80,6 +80,8 @@ function switchAppMode(m){
   document.getElementById('ts-fg').classList.toggle('hidden',m==='flow');
   document.getElementById('tl-ctrl').style.display=m==='timeline'?'flex':'none';
   document.getElementById('fl-ctrl').style.display=m==='flow'?'flex':'none';
+  var zc=document.getElementById('zoom-ctrl');
+  if(zc) zc.style.display=(m==='timeline'||m==='flow')?'flex':'none';
   document.getElementById('mode-badge').innerHTML=m==='timeline'
     ?'<span class="mind tl"><span class="mdot"></span>Timeline</span>'
     :m==='table'
