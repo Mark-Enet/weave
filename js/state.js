@@ -34,6 +34,7 @@ function svgColors(){
     listDesc: dark?'#ccc8e8':'#3d2b1a',
     listSys:  dark?'#a8a0cc':'#7a5c3a',
     listInt:  dark?'#7870aa':'#b08050',
+    tableDesc:dark?'#9e96c8':'#8a6a4a',  // softer description colour for table mode
     accent:   dark?'#f07060':'#e8604a',
     teal:     dark?'#45d0d0':'#3cbfbf',
     proc:     dark?'#8888dd':'#1c8080',

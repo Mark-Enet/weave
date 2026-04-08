@@ -141,44 +141,165 @@ function renderList(parent,sorted){
   parent.appendChild(wrap);
 }
 
+// ── TABLE SORT STATE ────────────────────────────────────────
+var tableSortCol=null;  // null = use incoming order (timestamp asc); otherwise event field key
+var tableSortDir='asc';
+
 // ── TABLE VIEW ───────────────────────────────────────────
 function renderTable(parent,sorted){
   var c=svgColors();
+  var tz=getDisplayTZ();
+
+  // Column definitions: key, header label, sort field, default width (px)
+  var COLS=[
+    {key:'expand', label:'',                 sortKey:null,                     def:26 },
+    {key:'ts',     label:'Timestamp ('+tz+')',sortKey:'timestamp',             def:160},
+    {key:'desc',   label:'Description',       sortKey:'desc',                  def:280},
+    {key:'level',  label:'Level',             sortKey:'level',                 def:80 },
+    {key:'sys',    label:'System',            sortKey:'system',                def:140},
+    {key:'actor',  label:'Actor',             sortKey:'actor',                 def:120},
+    {key:'ec',     label:'Event Code',        sortKey:'eventCode',             def:120},
+    {key:'ic',     label:'Integration Code',  sortKey:'managedIntegrationCode',def:140},
+  ];
+
+  // Load saved column widths from localStorage
+  var savedWidths={};
+  try{ savedWidths=JSON.parse(localStorage.getItem('weave-table-col-widths')||'{}'); }catch(e){}
+  var colWidths=COLS.map(function(col){ return savedWidths[col.key]||col.def; });
+
+  // Sort rows
+  var rows=sorted.slice();
+  if(tableSortCol){
+    rows.sort(function(a,b){
+      if(tableSortCol==='timestamp'){
+        var av=a.timestamp||0, bv=b.timestamp||0;
+        return tableSortDir==='asc'?av-bv:bv-av;
+      }
+      var av=String(a[tableSortCol]||'').toLowerCase();
+      var bv=String(b[tableSortCol]||'').toLowerCase();
+      if(av<bv) return tableSortDir==='asc'?-1:1;
+      if(av>bv) return tableSortDir==='asc'?1:-1;
+      return 0;
+    });
+  }
+
   var wrap=document.createElement('div');
   wrap.style.cssText='overflow-x:auto;width:100%;padding:10px 0';
 
+  var totalW=colWidths.reduce(function(s,w){return s+w;},0);
   var tbl=document.createElement('table');
-  tbl.style.cssText='width:100%;border-collapse:collapse;font-size:.83rem';
+  tbl.style.cssText='border-collapse:collapse;font-size:.83rem;table-layout:fixed;width:'+Math.max(totalW,400)+'px';
 
-  // Header — first column is the expand-toggle column (no label)
+  // Colgroup so widths are respected with table-layout:fixed
+  var cg=document.createElement('colgroup');
+  COLS.forEach(function(col,ci){
+    var ce=document.createElement('col');
+    ce.style.width=colWidths[ci]+'px';
+    cg.appendChild(ce);
+  });
+  tbl.appendChild(cg);
+
+  // Header
   var thead=document.createElement('thead');
   var hrow=document.createElement('tr');
-  var tzHeader='Timestamp ('+getDisplayTZ()+')';
-  var hcols=['expand',tzHeader,'Description','Level','System','Actor','Event Code','Integration Code'];
-  hcols.forEach(function(h){
+  COLS.forEach(function(col,ci){
     var th=document.createElement('th');
-    th.textContent=h==='expand'?'':h; // expand column has no visible header text
     th.style.cssText='padding:8px 10px;text-align:left;font-family:DM Mono,monospace;font-size:.68rem;font-weight:700;'+
-      'color:'+c.label+';border-bottom:2px solid '+c.grid+';white-space:nowrap;text-transform:uppercase;letter-spacing:.06em';
+      'color:'+c.label+';border-bottom:2px solid '+c.grid+';white-space:nowrap;text-transform:uppercase;letter-spacing:.06em;'+
+      'position:relative;user-select:none;overflow:hidden;box-sizing:border-box';
+
+    if(col.label){
+      if(col.sortKey){
+        // Sortable header
+        th.style.cursor='pointer';
+        var labelSpan=document.createElement('span');
+        labelSpan.textContent=col.label;
+        var ind=document.createElement('span');
+        ind.style.cssText='margin-left:4px;font-size:.65rem';
+        if(tableSortCol===col.sortKey){
+          ind.textContent=tableSortDir==='asc'?'\u25b2':'\u25bc';
+          ind.style.color=c.accent;
+          ind.style.opacity='1';
+        }else{
+          ind.textContent='\u25b4';
+          ind.style.opacity='.28';
+        }
+        th.appendChild(labelSpan);
+        th.appendChild(ind);
+        th.onclick=(function(sk){return function(e){
+          // ignore if click was on the resize handle
+          if(e.target&&e.target.classList.contains('tbl-rh')) return;
+          if(tableSortCol===sk){
+            tableSortDir=tableSortDir==='asc'?'desc':'asc';
+          }else{
+            tableSortCol=sk;
+            tableSortDir='asc';
+          }
+          render();
+        };})(col.sortKey);
+      }else{
+        th.textContent=col.label;
+      }
+    }
+
+    // Resize handle (not on expand column or last column)
+    if(col.key!=='expand' && ci<COLS.length-1){
+      var rh=document.createElement('div');
+      rh.className='tbl-rh';
+      rh.style.cssText='position:absolute;top:0;right:0;width:5px;height:100%;cursor:col-resize;z-index:2';
+      rh.addEventListener('mousedown',(function(colIdx){
+        return function(ev){
+          ev.preventDefault(); ev.stopPropagation();
+          var startX=ev.clientX, startW=colWidths[colIdx];
+          function onMove(me){
+            var newW=Math.max(40,Math.round(startW+(me.clientX-startX)));
+            colWidths[colIdx]=newW;
+            var cols=tbl.querySelectorAll('col');
+            if(cols[colIdx]) cols[colIdx].style.width=newW+'px';
+            var tw=colWidths.reduce(function(s,w){return s+w;},0);
+            tbl.style.width=Math.max(tw,400)+'px';
+          }
+          function onUp(){
+            document.removeEventListener('mousemove',onMove);
+            document.removeEventListener('mouseup',onUp);
+            // Persist widths
+            var wObj={};
+            COLS.forEach(function(c,i){ wObj[c.key]=colWidths[i]; });
+            try{ localStorage.setItem('weave-table-col-widths',JSON.stringify(wObj)); }catch(e){}
+          }
+          document.addEventListener('mousemove',onMove);
+          document.addEventListener('mouseup',onUp);
+        };
+      })(ci));
+      th.appendChild(rh);
+    }
+
     hrow.appendChild(th);
   });
   thead.appendChild(hrow);
   tbl.appendChild(thead);
 
+  // Description clamp/expand style strings (captured for closures)
+  var clampSty='display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;'+
+    'font-weight:400;color:'+c.tableDesc+';word-break:break-word';
+  var expandSty='display:block;overflow:visible;font-weight:400;color:'+c.tableDesc+';word-break:break-word';
+
   var tbody=document.createElement('tbody');
-  sorted.forEach(function(e,idx){
+  // Track desc inner+btn pairs for post-render overflow check
+  var descPairs=[];
+
+  rows.forEach(function(e,idx){
     var hasInts=(e.interactions||[]).length>0;
     var rowId='tbl-row-'+(e._id||idx);
     var isOdd=idx%2===1;
     var rowBg=isOdd?c.laneAlt:'transparent';
 
-    // Main event row
     var tr=document.createElement('tr');
     tr.style.cssText='border-bottom:1px solid '+c.grid+';background:'+rowBg;
 
-    // Expand toggle cell
+    // Expand toggle cell (interactions)
     var tdTgl=document.createElement('td');
-    tdTgl.style.cssText='padding:8px 6px;text-align:center;width:26px';
+    tdTgl.style.cssText='padding:8px 6px;text-align:center;overflow:hidden';
     if(hasInts){
       var btn=document.createElement('button');
       btn.textContent='+';
@@ -200,19 +321,35 @@ function renderTable(parent,sorted){
 
     // Timestamp
     var tdTs=document.createElement('td');
-    tdTs.style.cssText='padding:8px 10px;font-family:DM Mono,monospace;font-size:.7rem;color:'+c.listTs+';white-space:nowrap';
+    tdTs.style.cssText='padding:8px 10px;font-family:DM Mono,monospace;font-size:.7rem;color:'+c.listTs+
+      ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis';
     tdTs.textContent=e.timestamp?fmtTs(e.timestamp,displayConfig.showDate):'—';
     tr.appendChild(tdTs);
 
-    // Description
+    // Description — 2-line clamp with per-row expand toggle
     var tdDesc=document.createElement('td');
-    tdDesc.style.cssText='padding:8px 10px;font-weight:600;color:'+c.listDesc;
-    tdDesc.textContent=e.desc||'';
+    tdDesc.style.cssText='padding:8px 10px;overflow:hidden';
+    var descInner=document.createElement('div');
+    descInner.style.cssText=clampSty;
+    descInner.textContent=e.desc||'';
+    tdDesc.appendChild(descInner);
+    var descBtn=document.createElement('button');
+    descBtn.textContent='more';
+    descBtn.style.cssText='display:none;background:none;border:none;padding:0 0 0 2px;cursor:pointer;'+
+      'font-size:.68rem;color:'+c.accent+';font-family:DM Mono,monospace;font-weight:600;line-height:1.6';
+    descBtn.onclick=(function(inner,dbtn,cs,es){return function(ev){
+      ev.stopPropagation();
+      var expanded=inner.style.overflow==='visible';
+      inner.style.cssText=expanded?cs:es;
+      dbtn.textContent=expanded?'more':'less';
+    };})(descInner,descBtn,clampSty,expandSty);
+    tdDesc.appendChild(descBtn);
+    descPairs.push({inner:descInner,btn:descBtn});
     tr.appendChild(tdDesc);
 
     // Level
     var tdLvl=document.createElement('td');
-    tdLvl.style.cssText='padding:8px 10px;white-space:nowrap';
+    tdLvl.style.cssText='padding:8px 10px;white-space:nowrap;overflow:hidden';
     if(e.level){
       var lc=levelColor(e.level);
       var lb=document.createElement('span');
@@ -220,33 +357,35 @@ function renderTable(parent,sorted){
       lb.style.cssText='font-family:DM Mono,monospace;font-size:.65rem;font-weight:800;padding:1px 6px;border-radius:4px;'+
         'background:'+lc+'22;color:'+lc;
       tdLvl.appendChild(lb);
-    } else {
-      tdLvl.style.cssText+='color:'+c.label;
+    }else{
+      tdLvl.style.color=c.label;
       tdLvl.textContent='—';
     }
     tr.appendChild(tdLvl);
 
     // System
     var tdSys=document.createElement('td');
-    tdSys.style.cssText='padding:8px 10px;color:'+c.listSys;
+    tdSys.style.cssText='padding:8px 10px;color:'+c.listSys+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
     tdSys.textContent=e.system||'—';
     tr.appendChild(tdSys);
 
     // Actor
     var tdAct=document.createElement('td');
-    tdAct.style.cssText='padding:8px 10px;color:'+c.listSys;
+    tdAct.style.cssText='padding:8px 10px;color:'+c.listSys+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
     tdAct.textContent=e.actor||'—';
     tr.appendChild(tdAct);
 
     // Event Code
     var tdEc=document.createElement('td');
-    tdEc.style.cssText='padding:8px 10px;font-family:DM Mono,monospace;font-size:.72rem;color:'+c.listTs;
+    tdEc.style.cssText='padding:8px 10px;font-family:DM Mono,monospace;font-size:.72rem;color:'+c.listTs+
+      ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
     tdEc.textContent=e.eventCode||'—';
     tr.appendChild(tdEc);
 
     // Integration Code
     var tdIc=document.createElement('td');
-    tdIc.style.cssText='padding:8px 10px;font-family:DM Mono,monospace;font-size:.72rem;color:'+c.listTs;
+    tdIc.style.cssText='padding:8px 10px;font-family:DM Mono,monospace;font-size:.72rem;color:'+c.listTs+
+      ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
     tdIc.textContent=e.managedIntegrationCode||'—';
     tr.appendChild(tdIc);
 
@@ -258,10 +397,9 @@ function renderTable(parent,sorted){
       subTr.id=rowId+'-sub';
       subTr.style.display='none';
       var subTd=document.createElement('td');
-      subTd.colSpan=hcols.length;
+      subTd.colSpan=COLS.length;
       subTd.style.cssText='padding:4px 10px 10px 36px;background:'+c.subRowBg;
 
-      // Sub-table header
       var subTbl=document.createElement('table');
       subTbl.style.cssText='width:100%;border-collapse:collapse;font-size:.77rem';
       var subThead=document.createElement('thead');
@@ -287,7 +425,7 @@ function renderTable(parent,sorted){
           {text:i.target||'—',style:'color:'+c.listSys+';font-weight:600'},
           {text:i.nature||'—',style:'font-family:DM Mono,monospace;color:'+natColor+';font-weight:700'},
           {text:i.delay?i.delay+'ms':'—',style:'font-family:DM Mono,monospace;color:'+c.listTs},
-          {text:i.label||'—',style:'color:'+c.listDesc}
+          {text:i.label||'—',style:'color:'+c.tableDesc}
         ].forEach(function(cell){
           var td=document.createElement('td');
           td.textContent=cell.text;
@@ -306,4 +444,11 @@ function renderTable(parent,sorted){
   tbl.appendChild(tbody);
   wrap.appendChild(tbl);
   parent.appendChild(wrap);
+
+  // Post-render: show expand button only where description actually overflows 2 lines
+  descPairs.forEach(function(p){
+    if(p.inner.scrollHeight>p.inner.clientHeight+2){
+      p.btn.style.display='inline-block';
+    }
+  });
 }
