@@ -53,6 +53,18 @@ function updateLegendColors(){
   if(lp) lp.style.borderColor=c.accent;
   if(ll) ll.style.borderColor=c.teal;
   if(lc) lc.style.borderColor=c.proc;
+  // Task 1: force-hide legend in table mode
+  var leg=document.getElementById('diagram-legend');
+  if(!leg) return;
+  leg.classList.toggle('legend-table-hidden', appMode==='table');
+  // Task 2: dim legend when no interactions are rendered (timeline/flow only)
+  if(appMode!=='table'){
+    var active=getActiveEvents();
+    var hasInteractions=active.some(function(ev){return (ev.interactions||[]).some(function(i){return i.target;});});
+    leg.classList.toggle('legend-dim', !hasInteractions);
+  } else {
+    leg.classList.remove('legend-dim');
+  }
 }
 function toggleLegend(){
   var leg=document.getElementById('diagram-legend');
