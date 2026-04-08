@@ -295,6 +295,7 @@ html.dark .elevel-debug{background:rgba(136,153,200,.12);color:#99aacc}
   text-transform:uppercase;letter-spacing:.08em;padding:3px 9px;border-radius:6px;font-weight:500}
 .mind.tl{background:rgba(232,96,74,.12);color:var(--accent);border:1px solid rgba(232,96,74,.25)}
 .mind.fl{background:rgba(60,191,191,.12);color:var(--accent2);border:1px solid rgba(60,191,191,.3)}
+.mind.tb{background:rgba(140,100,220,.12);color:var(--text2);border:1px solid rgba(140,100,220,.25)}
 .mdot{width:6px;height:6px;border-radius:50%;background:currentColor;
   animation:pd 2s ease-in-out infinite}
 @keyframes pd{0%,100%{opacity:1}50%{opacity:.4}}

@@ -76,12 +76,15 @@ function switchAppMode(m){
   appMode=m;
   document.getElementById('banner-tab-timeline').classList.toggle('active',m==='timeline');
   document.getElementById('banner-tab-flow').classList.toggle('active',m==='flow');
+  document.getElementById('banner-tab-table').classList.toggle('active',m==='table');
   document.getElementById('ts-fg').classList.toggle('hidden',m==='flow');
   document.getElementById('tl-ctrl').style.display=m==='timeline'?'flex':'none';
   document.getElementById('fl-ctrl').style.display=m==='flow'?'flex':'none';
   document.getElementById('mode-badge').innerHTML=m==='timeline'
     ?'<span class="mind tl"><span class="mdot"></span>Timeline</span>'
-    :'<span class="mind fl"><span class="mdot"></span>Causal Flow</span>';
+    :m==='table'
+      ?'<span class="mind tb"><span class="mdot"></span>Table</span>'
+      :'<span class="mind fl"><span class="mdot"></span>Causal Flow</span>';
   document.querySelectorAll('.iblock').forEach(function(b){
     var id=b.dataset.id;
     var dr=document.getElementById('dr-'+id), tr=document.getElementById('tr-'+id);

@@ -2,8 +2,7 @@
 function exportData(){
   var data={version:3,appMode:appMode,scenarioName:scenName,scenarioDesc:scenDesc,sysOrder:sysOrder,systemsRegistry:systemsRegistry,actorsRegistry:actorsRegistry,levelsRegistry:levelsRegistry,
     displayConfig:displayConfig,
-    settings:{viewMode:document.getElementById('view-mode').value,
-              orientation:document.getElementById('orientation').value,
+    settings:{orientation:document.getElementById('orientation').value,
               showDate:displayConfig.showDate,
               flowDirection:document.getElementById('flow-dir').value,
               showSeq:displayConfig.showSeq,
@@ -23,9 +22,11 @@ function importData(e){
       scenName=data.scenarioName||''; scenDesc=data.scenarioDesc||'';
       document.getElementById('scenario-name').value=scenName;
       document.getElementById('scenario-desc').value=scenDesc;
-      if(data.appMode) switchAppMode(data.appMode);
+      // Backward compat: old exports stored viewMode='table' under appMode='timeline'
+      var importedMode=data.appMode||'timeline';
+      if(importedMode==='timeline'&&data.settings&&data.settings.viewMode==='table') importedMode='table';
+      switchAppMode(importedMode);
       if(data.settings){
-        document.getElementById('view-mode').value=data.settings.viewMode||'multi';
         document.getElementById('orientation').value=data.settings.orientation||'vertical';
         document.getElementById('flow-dir').value=data.settings.flowDirection||'lr';
       }
