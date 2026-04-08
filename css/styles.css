@@ -319,6 +319,7 @@ html.dark .elevel-debug{background:rgba(136,153,200,.12);color:#99aacc}
 .drag-handle:active{cursor:grabbing}
 
 .hint{font-size:.7rem;color:var(--text3);line-height:1.5}
+.req{color:var(--accent1);margin-left:2px}
 
 /* ── ABOUT MODAL ─────────────────────────────────────── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;
