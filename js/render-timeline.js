@@ -344,6 +344,14 @@ function renderTimeline(parent,sorted,orientation){
     if(displayConfig.showManagedIntegrationCode&&e.managedIntegrationCode){
       aT(g,textX,textY,trunc(e.managedIntegrationCode,20),{'text-anchor':textAnchor,'font-size':'12','fill':svgColors().listInt,'font-family':'DM Mono,monospace'});
     }
+    // Transparent click overlay — loads event into editor
+    var hitCircle=sv('circle',{cx:cx,cy:cy,r:19,fill:'transparent',cursor:'pointer'});
+    hitCircle.addEventListener('click',(function(evId){return function(ev2){
+      ev2.stopPropagation();
+      var idx=findEventByIdIdx(evId);
+      if(idx>=0) editEvent(idx);
+    };})(e._id));
+    g.appendChild(hitCircle);
   });
   parent.appendChild(svg);
 }

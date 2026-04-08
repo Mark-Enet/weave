@@ -1,5 +1,8 @@
 // ── UI ──────────────────────────────────────────────
 
+// TABLE SELECTION — persists across re-renders
+var tableSelection=new Set();
+
 // FILE MENU (navbar)
 function fileMenuClick(){
   var menu=document.getElementById('file-menu');
@@ -24,6 +27,26 @@ function openAbout(){
 }
 function closeAbout(){
   document.getElementById('about-modal').classList.remove('open');
+}
+
+
+// CONFIRM MODAL
+var _confirmCb=null;
+function showConfirm(msg,onOk,okLabel,title){
+  document.getElementById('confirm-title').textContent=title||'Confirm';
+  document.getElementById('confirm-msg').textContent=msg;
+  document.getElementById('confirm-ok-btn').textContent=okLabel||'Confirm';
+  _confirmCb=onOk;
+  document.getElementById('confirm-modal').classList.add('open');
+}
+function closeConfirm(){
+  document.getElementById('confirm-modal').classList.remove('open');
+  _confirmCb=null;
+}
+function acceptConfirm(){
+  document.getElementById('confirm-modal').classList.remove('open');
+  var cb=_confirmCb; _confirmCb=null;
+  if(cb) cb();
 }
 
 
@@ -316,10 +339,13 @@ function editEvent(idx){
   updateList();
 }
 function deleteEvent(idx){
-  if(!confirm('Delete this event?')) return;
-  events.splice(idx,1);
-  if(editIdx===idx) clearForm(); else if(editIdx>idx) editIdx--;
-  render(); updateList(); refreshFilterBar(); toast('Deleted','\uD83D\uDDD1');
+  showConfirm('Delete this event?',function(){
+    var evId=events[idx]&&events[idx]._id;
+    events.splice(idx,1);
+    if(evId) tableSelection.delete(evId);
+    if(editIdx===idx) clearForm(); else if(editIdx>idx) editIdx--;
+    render(); updateList(); refreshFilterBar(); toast('Deleted','\uD83D\uDDD1');
+  },'Delete','Delete Event');
 }
 function clearForm(){
   document.getElementById('desc').value='';
@@ -339,8 +365,9 @@ function saveScenario(){
   render(); toast('Scenario saved','\u2713');
 }
 function clearAll(){
-  if(!confirm('Delete ALL events? Cannot be undone.')) return;
-  events=[]; editIdx=-1; clearForm(); clearFilters(); render(); updateList(); toast('Cleared','X');
+  showConfirm('Delete ALL events? This cannot be undone.',function(){
+    events=[]; editIdx=-1; tableSelection=new Set(); clearForm(); clearFilters(); render(); updateList(); toast('Cleared','X');
+  },'Delete All','Delete All Events');
 }
 
 // EVENT LIST
@@ -534,9 +561,10 @@ function saveNewActor(){
 }
 function addActor(){toggleActorForm();}
 function deleteSystem(name){
-  if(!confirm('Remove "'+name+'" from the registry? (Does not delete events using it.)')) return;
-  systemsRegistry=systemsRegistry.filter(function(s){return s.name!==name;});
-  knownSys.delete(name); refreshDL(); renderSystemsList();
+  showConfirm('Remove "'+name+'" from the registry? (Does not delete events using it.)',function(){
+    systemsRegistry=systemsRegistry.filter(function(s){return s.name!==name;});
+    knownSys.delete(name); refreshDL(); renderSystemsList();
+  },'Remove','Remove System');
 }
 function setSysOrder(name,val){
   var reg=systemsRegistry.find(function(s){return s.name===name;});
@@ -605,6 +633,9 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('dc-time-format').value=displayConfig.timeFormat||'HH:mm:ss';
   document.getElementById('about-modal').addEventListener('click',function(e){
     if(e.target===this) closeAbout();
+  });
+  document.getElementById('confirm-modal').addEventListener('click',function(e){
+    if(e.target===this) closeConfirm();
   });
   // Close file menu when clicking outside
   document.addEventListener('click',function(e){
