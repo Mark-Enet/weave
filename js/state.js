@@ -1,5 +1,5 @@
 // ── STATE ───────────────────────────────────────────────
-var APP_VERSION = '2026.04.08.004451';
+var APP_VERSION = '2026.04.08.102803';
 var events=[], editIdx=-1, iCount=0, scenName='', scenDesc='', appMode='timeline';
 var timelineCompact = true;
 var sysOrder={}; // { systemName: orderNumber } — lower = earlier in diagram
