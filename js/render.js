@@ -9,7 +9,7 @@ var _renderId=0;
 function mkSVG(W,H){
   _renderId++;
   var rid=_renderId;
-  var svg=sv('svg',{width:'100%',height:H,viewBox:'0 0 '+W+' '+H,preserveAspectRatio:'xMidYMid meet'});
+  var svg=sv('svg',{width:W,height:H,viewBox:'0 0 '+W+' '+H,'data-nat-w':W,'data-nat-h':H});
   var defs=sv('defs');
 
   // Standard arrowhead marker.
@@ -104,10 +104,68 @@ function render(){
     renderTable(ca,sorted);
   } else if(appMode==='timeline'){
     renderTimeline(ca,sorted,document.getElementById('orientation').value);
+    applyDiagramZoom(diagramZoom);
+    _setupWheelZoom();
   }else{
     renderFlow(ca,document.getElementById('flow-dir').value,displayConfig.showSeq,active);
+    applyDiagramZoom(diagramZoom);
+    _setupWheelZoom();
   }
   if(typeof updateLegendColors==='function') updateLegendColors();
+}
+
+// ── DIAGRAM ZOOM ─────────────────────────────────────────
+var ZOOM_MIN=0.05, ZOOM_MAX=5, ZOOM_STEP=1.2, ZOOM_WHEEL_STEP=1.1;
+function _getSvg(){return document.querySelector('#chart>svg');}
+function applyDiagramZoom(z){
+  diagramZoom=Math.max(ZOOM_MIN,Math.min(ZOOM_MAX,z));
+  var svg=_getSvg(); if(!svg) return;
+  var natW=parseFloat(svg.getAttribute('data-nat-w'));
+  var natH=parseFloat(svg.getAttribute('data-nat-h'));
+  svg.setAttribute('width',natW*diagramZoom);
+  svg.setAttribute('height',natH*diagramZoom);
+  var zd=document.getElementById('zoom-level');
+  if(zd) zd.textContent=Math.round(diagramZoom*100)+'%';
+}
+function getDiagramFitZoom(){
+  var vp=document.querySelector('.cvport'), svg=_getSvg();
+  if(!svg||!vp) return 1.0;
+  var natW=parseFloat(svg.getAttribute('data-nat-w'));
+  var natH=parseFloat(svg.getAttribute('data-nat-h'));
+  if(!natW||!natH) return 1.0;
+  var st=document.getElementById('stitle');
+  var vpW=vp.clientWidth-40, vpH=vp.clientHeight-40-(st?st.offsetHeight:0);
+  return Math.min(vpW/natW, vpH/natH);
+}
+function zoomToFit(){applyDiagramZoom(getDiagramFitZoom());}
+function zoomToNormal(){
+  applyDiagramZoom(1.0);
+  var vp=document.querySelector('.cvport'); if(vp){vp.scrollTop=0;vp.scrollLeft=0;}
+}
+function zoomIn(){applyDiagramZoom(diagramZoom*ZOOM_STEP);}
+function zoomOut(){applyDiagramZoom(diagramZoom/ZOOM_STEP);}
+function _setupWheelZoom(){
+  var vp=document.querySelector('.cvport');
+  if(!vp||vp._wzBound) return;
+  vp._wzBound=true;
+  vp.addEventListener('wheel',function(e){
+    var svg=_getSvg(); if(!svg||appMode==='table') return;
+    e.preventDefault();
+    var oldZ=diagramZoom;
+    var factor=e.deltaY<0?ZOOM_WHEEL_STEP:(1/ZOOM_WHEEL_STEP);
+    var newZ=Math.max(ZOOM_MIN,Math.min(ZOOM_MAX,oldZ*factor));
+    // Focal point: mouse position mapped to SVG natural coordinates
+    var svgRect=svg.getBoundingClientRect();
+    var vpRect=vp.getBoundingClientRect();
+    var mxOnSvg=e.clientX-svgRect.left;
+    var myOnSvg=e.clientY-svgRect.top;
+    var natX=mxOnSvg/oldZ, natY=myOnSvg/oldZ;
+    var svgInScrollX=svgRect.left-vpRect.left+vp.scrollLeft;
+    var svgInScrollY=svgRect.top-vpRect.top+vp.scrollTop;
+    applyDiagramZoom(newZ);
+    vp.scrollLeft=svgInScrollX+natX*newZ-(e.clientX-vpRect.left);
+    vp.scrollTop=svgInScrollY+natY*newZ-(e.clientY-vpRect.top);
+  },{passive:false});
 }
 
 // ── LIST VIEW ───────────────────────────────────────────

@@ -1,6 +1,7 @@
 // ── STATE ───────────────────────────────────────────────
 var APP_VERSION = '2026.04.08.113734';
 var events=[], editIdx=-1, iCount=0, scenName='', scenDesc='', appMode='timeline';
+var diagramZoom=1.0;
 var timelineCompact = true;
 var sysOrder={}; // { systemName: orderNumber } — lower = earlier in diagram
 var systemsRegistry=[]; // [{name,desc,order}]
