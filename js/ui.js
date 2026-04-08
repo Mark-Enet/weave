@@ -124,8 +124,18 @@ function fillTD(sel,cur,filterSystem){
 }
 
 // INTERACTION FIELDS
+var SAVE_EVENT_SVG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>';
+function updateSaveBtnLabel(){
+  var btn=document.getElementById('save-event-btn');
+  if(!btn) return;
+  var hasInts=document.querySelectorAll('.iblock').length>0;
+  btn.innerHTML=SAVE_EVENT_SVG+(hasInts?'Save Event &amp; Interactions':'Save Event');
+}
+
 function addIField(tgt,delay,nature,trigEvt,order,label){
-  tgt=tgt||''; delay=delay||0; nature=nature||'push'; trigEvt=trigEvt||'';
+  tgt=tgt||'';
+  if(delay===undefined||delay===null||delay==='') delay='';
+  nature=nature||'push'; trigEvt=trigEvt||'';
   iCount++; var id=iCount;
   var c=document.getElementById('ic'), b=document.createElement('div');
   b.className='iblock'; b.id='ib-'+id; b.dataset.id=id;
@@ -141,21 +151,22 @@ function addIField(tgt,delay,nature,trigEvt,order,label){
       '</div>'+
       '<button class="btn btn-d" onclick="removeI('+id+')">\u2715 Remove</button>'+
     '</div>'+
-    '<div class="fg"><label class="fl">Target System</label>'+
-    '<input type="text" id="ti-'+id+'" list="tdl-'+id+'" placeholder="Type or pick a system\u2026" autocomplete="off" oninput="refreshTriggerDD('+id+')">'+
+    '<div class="fg"><label class="fl">Target System <span class="req">*</span></label>'+
+    '<input type="text" id="ti-'+id+'" list="tdl-'+id+'" placeholder="Type or pick a system\u2026" autocomplete="off" oninput="refreshTriggerDD('+id+');refreshDelayRequired('+id+')">'+
     '<datalist id="tdl-'+id+'"></datalist></div>'+
-    '<div class="fg"><label class="fl">Label (optional)</label>'+
+    '<div class="fg"><label class="fl">Label</label>'+
     '<input type="text" id="ilbl-'+id+'" placeholder="Describe this interaction\u2026"></div>'+
     '<div class="mgrid">'+
-    '<div class="fg" id="dr-'+id+'" style="'+(appMode==='flow'?'display:none':'')+'">'+
-    '<label class="fl">Delay (ms)</label>'+
-    '<input type="number" id="dl-'+id+'" value="'+delay+'" min="0" placeholder="0"></div>'+
-    '<div class="fg"><label class="fl">Type</label>'+
+    '<div class="fg"><label class="fl">Type <span class="req">*</span></label>'+
     '<select id="nt-'+id+'">'+
     '<option value="push"'+(nature==='push'?' selected':'')+'>push \u2192</option>'+
     '<option value="pull"'+(nature==='pull'?' selected':'')+'>pull \u2190</option>'+
     '<option value="process"'+(nature==='process'?' selected':'')+'>process</option>'+
-    '</select></div></div>'+
+    '</select></div>'+
+    '<div class="fg" id="dr-'+id+'" style="'+(appMode==='flow'?'display:none':'')+'">'+
+    '<label class="fl" id="dlbl-'+id+'">Delay (ms)</label>'+
+    '<input type="number" id="dl-'+id+'" value="'+delay+'" min="0" placeholder="0"></div>'+
+    '</div>'+
     '<div class="fg" id="tr-'+id+'" style="'+(appMode==='timeline'?'display:none':'')+'">'+
     '<label class="fl">Triggers Event (Flow mode)</label>'+
     '<select id="te-'+id+'"></select>'+
@@ -169,6 +180,8 @@ function addIField(tgt,delay,nature,trigEvt,order,label){
   var tSys=tgt||'';
   fillTD(document.getElementById('te-'+id),trigEvt,tSys||null);
   renumberIBlocks();
+  refreshDelayRequired(id);
+  updateSaveBtnLabel();
 }
 
 function refreshTriggerDD(id){
@@ -178,6 +191,17 @@ function refreshTriggerDD(id){
   var sys=ti.value.trim();
   var cur=te.value;
   fillTD(te,cur,sys||null);
+}
+
+function refreshDelayRequired(id){
+  if(appMode!=='timeline') return;
+  var ti=document.getElementById('ti-'+id);
+  var dlbl=document.getElementById('dlbl-'+id);
+  if(!ti||!dlbl) return;
+  var evSys=(document.getElementById('system-input')||{}).value||'';
+  var tgt=ti.value.trim();
+  var isRequired=tgt!==''&&tgt===evSys.trim();
+  dlbl.innerHTML='Delay (ms)'+(isRequired?' <span class="req">*</span>':'');
 }
 
 function renumberIBlocks(){
@@ -195,8 +219,8 @@ function moveI(id,dir){
   renumberIBlocks();
 }
 
-function removeI(id){var b=document.getElementById('ib-'+id);if(b)b.remove();renumberIBlocks();}
-function clearI(){document.getElementById('ic').innerHTML='';iCount=0;}
+function removeI(id){var b=document.getElementById('ib-'+id);if(b)b.remove();renumberIBlocks();updateSaveBtnLabel();}
+function clearI(){document.getElementById('ic').innerHTML='';iCount=0;updateSaveBtnLabel();}
 
 // SAVE / EDIT / DELETE
 function saveDisplayConfig(){
@@ -222,6 +246,18 @@ function saveEvent(){
     var v=document.getElementById('ts').value;
     if(!v){toast('Please select a timestamp','\u26a0');return;}
     ts=fromDTL(v); tsStr=new Date(ts).toISOString();
+  }
+  // Validate interaction fields
+  var intBlocks=document.querySelectorAll('.iblock');
+  for(var bi=0;bi<intBlocks.length;bi++){
+    var bid=intBlocks[bi].dataset.id;
+    var bti=document.getElementById('ti-'+bid);
+    var btval=(bti?bti.value:'').trim();
+    if(!btval){toast('Please specify a Target System for each interaction','\u26a0');bti&&bti.focus();return;}
+    if(appMode==='timeline'&&btval===sys){
+      var dlEl=document.getElementById('dl-'+bid);
+      if(!dlEl||dlEl.value===''){toast('Delay is required when the interaction target is the same as the event system','\u26a0');dlEl&&dlEl.focus();return;}
+    }
   }
   knownSys.add(sys);
   var ints=[];
