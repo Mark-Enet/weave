@@ -112,11 +112,11 @@
 
     <div class="sidebar-panel active" id="panel-add">
       <div class="fg">
-        <label class="fl">Description</label>
+        <label class="fl">Description <span class="req">*</span></label>
         <input type="text" id="desc" placeholder="What happens in this event?">
       </div>
       <div class="fg">
-        <label class="fl">System / Context</label>
+        <label class="fl">System / Context <span class="req">*</span></label>
         <input type="text" id="system-input" list="system-dl" placeholder="Type a name or pick existing…" autocomplete="off">
         <datalist id="system-dl"></datalist>
         <span class="hint" style="margin-top:3px">Type freely to create a new system, or pick from suggestions.</span>
@@ -150,7 +150,7 @@
         </div>
       </div>
       <div class="fg ts-field" id="ts-fg">
-        <label class="fl">Timestamp</label>
+        <label class="fl">Timestamp <span class="req">*</span></label>
         <input type="datetime-local" id="ts" step="1">
       </div>
       <div class="sep"></div>
