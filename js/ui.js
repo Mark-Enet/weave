@@ -286,6 +286,10 @@ function saveEvent(){
     var v=document.getElementById('ts').value;
     if(!v){toast('Please select a timestamp','\u26a0');return;}
     ts=fromDTL(v); tsStr=new Date(ts).toISOString();
+  } else {
+    var v=document.getElementById('ts').value;
+    if(v){ts=fromDTL(v); tsStr=new Date(ts).toISOString();}
+    else if(editIdx>=0&&events[editIdx]){ts=events[editIdx].timestamp||null; tsStr=events[editIdx].timestampStr||'';}
   }
   // Validate interaction fields
   var intBlocks=document.querySelectorAll('.iblock');
@@ -331,7 +335,7 @@ function editEvent(idx){
   document.getElementById('event-level').value=e.level||'';
   document.getElementById('event-code').value=e.eventCode||'';
   document.getElementById('managed-integration-code').value=e.managedIntegrationCode||'';
-  if(appMode==='timeline'&&(e.timestampStr||e.timestamp)) document.getElementById('ts').value=toDTL(e.timestampStr||new Date(e.timestamp).toISOString());
+  if(e.timestampStr||e.timestamp) document.getElementById('ts').value=toDTL(e.timestampStr||new Date(e.timestamp).toISOString());
   clearI();
   var sortedInts=[...( e.interactions||[])].sort(function(a,b){return (a.order||0)-(b.order||0);});
   sortedInts.forEach(function(i,idx){addIField(i.target,i.delay||0,i.nature,i.triggerEventId||'',idx,i.label||'');});
