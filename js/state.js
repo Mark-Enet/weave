@@ -3,6 +3,9 @@ var APP_VERSION = '2026.04.09.020116';
 var events=[], editIdx=-1, iCount=0, scenName='', scenDesc='', appMode='timeline';
 var diagramZoom=1.0;
 var timelineCompact = true;
+var timelineReverse = localStorage.getItem('weave-timeline-reverse')==='1';
+var diagramVSlider = parseFloat(localStorage.getItem('weave-vslider'))||1.0;
+var diagramHSlider = parseFloat(localStorage.getItem('weave-hslider'))||1.0;
 var sysOrder={}; // { systemName: orderNumber } — lower = earlier in diagram
 var systemsRegistry=[]; // [{name,desc,order}]
 var actorsRegistry=[];  // [{name,desc}]

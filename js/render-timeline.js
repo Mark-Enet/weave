@@ -91,7 +91,11 @@ function renderTimeline(parent,sorted,orientation){
     (e.interactions||[]).forEach(function(i){intMaxT=Math.max(intMaxT,e.timestamp+(i.delay||0));});
   });
   if(minT===maxT) maxT=minT+60000;
-  var LANE=isH?140:185, mg={top:80,right:100,bottom:80,left:195};
+  // Apply slider multipliers: vertical slider controls Y dimension, horizontal controls X.
+  // In vertical mode (isH=false): time axis is Y (EH), lanes are X (LANE).
+  // In horizontal mode (isH=true): time axis is X (EH), lanes are Y (LANE).
+  var LANE=isH?Math.round(140*diagramVSlider):Math.round(185*diagramHSlider);
+  var mg={top:80,right:100,bottom:80,left:195};
   var basePlotW=isH?Math.max(1200,N*LANE*2):N*LANE, basePlotH=isH?N*LANE:Math.max(600,sorted.length*100);
 
   // Ensure intMaxT is never less than maxT (maxT may have been bumped above by
@@ -103,7 +107,7 @@ function renderTimeline(parent,sorted,orientation){
   // Vertical: circle (r=17) + all label text below ~130 px (prevents overlap when
   //   all optional fields are shown: desc, level, eventCode, managedIntegrationCode).
   // Horizontal: needs wider clearance for text labels alongside the axis ~200 px.
-  var EH=isH?200:130;
+  var EH=isH?Math.round(200*diagramHSlider):Math.round(130*diagramVSlider);
 
   // Compute minimum non-zero time gap between same-system events (used for scale
   // proportioning) and build a stack-index map for simultaneous same-system events.
@@ -171,8 +175,28 @@ function renderTimeline(parent,sorted,orientation){
     else    {plotW=basePlotW; plotH=basePlotH+maxStackIndex*EH;}
   }
 
+  // If timelineReverse: wrap the scale so newer timestamps map to smaller positions
+  // (newer events appear at top in vertical mode, at left in horizontal mode).
+  if(timelineReverse){
+    var _origSc=sc, _tPx=sc._totalPx, _bps=sc._breakpoints;
+    sc=function(t){return _tPx-_origSc(t);};
+    sc._totalPx=_tPx;
+    if(_bps){
+      sc._breakpoints=_bps.slice().reverse().map(function(bp){
+        return {t0:bp.t0,t1:bp.t1,v0:_tPx-bp.v1,v1:_tPx-bp.v0,compressed:bp.compressed,gapMs:bp.gapMs};
+      });
+    } else {
+      sc._breakpoints=null;
+    }
+  }
+
   // evPos — visual position of event e along the time axis, accounting for stacking.
-  function evPos(e){return sc(e.timestamp)+(eventStack[e._id]||0)*EH;}
+  // In reversed mode the stack offset goes in the positive direction (older events
+  // are at larger positions, and simultaneous events spread further in that direction).
+  function evPos(e){
+    var base=sc(e.timestamp), idx=eventStack[e._id]||0;
+    return timelineReverse ? base-idx*EH : base+idx*EH;
+  }
   var W=plotW+mg.left+mg.right, H=plotH+mg.top+mg.bottom;
   function lp(i){return i*LANE+LANE/2;}
   var svg=mkSVG(W,H), rid=svg._rid, g=sv('g',{transform:'translate('+mg.left+','+mg.top+')'});

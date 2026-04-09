@@ -403,6 +403,10 @@
           <option value="vertical">Vertical</option>
           <option value="horizontal">Horizontal</option>
         </select>
+        <button class="btn btn-outline btn-sm" id="tl-reverse-btn" onclick="toggleTimelineReverse()" title="Toggle timeline direction">
+          <svg id="tl-reverse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M5 15l7 7 7-7M5 9l7-7 7 7"/></svg>
+          Reverse
+        </button>
       </div>
       <div id="fl-ctrl" style="display:none;align-items:center;gap:10px">
         <span class="tlbl">Direction</span>
@@ -461,6 +465,14 @@
       <div class="cvport">
         <div id="stitle"></div>
         <div id="chart"></div>
+      </div>
+      <!-- Floating vertical slider: controls vertical dimension spacing -->
+      <div id="diag-vslider-wrap" class="diag-vslider-wrap" title="Vertical spacing">
+        <input type="range" id="diag-vslider" class="diag-vslider" min="50" max="300" value="100" step="5" oninput="onDiagSlider()">
+      </div>
+      <!-- Floating horizontal slider: controls horizontal dimension spacing -->
+      <div id="diag-hslider-wrap" class="diag-hslider-wrap" title="Horizontal spacing">
+        <input type="range" id="diag-hslider" class="diag-hslider" min="50" max="300" value="100" step="5" oninput="onDiagSlider()">
       </div>
       <div id="diagram-legend">
         <div class="leg-item"><span class="leg-line" id="leg-push"></span><span class="leg-label">push &#x2192;</span></div>

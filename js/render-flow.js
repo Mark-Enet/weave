@@ -26,7 +26,12 @@ function renderFlow(parent,direction,showSeq,filteredEvents){
   var seqOf={}; order.forEach(function(id,i){seqOf[id]=i;});
   var rowOf={}; evList.forEach(function(e){rowOf[e._id]=sysArr.indexOf(e.system);});
   var extraRows=(displayConfig.showEventCode?1:0)+(displayConfig.showManagedIntegrationCode?1:0);
-  var BW=170,BH=58+extraRows*13,LG=isLR?105+extraRows*13:210,SG=isLR?215:165+extraRows*13;
+  var BW=170,BH=58+extraRows*13;
+  // Apply slider multipliers: vertical slider controls Y dimension, horizontal controls X.
+  // In LR mode: SG is X spacing (events), LG is Y spacing (lanes).
+  // In TB mode: SG is X spacing (lanes), LG is Y spacing (events).
+  var LG=Math.round((isLR?105+extraRows*13:210)*diagramVSlider);
+  var SG=Math.round((isLR?215:165+extraRows*13)*diagramHSlider);
   function bC(id){
     var row=rowOf[id]!==undefined?rowOf[id]:0, seq=seqOf[id]!==undefined?seqOf[id]:0;
     return isLR?{x:seq*SG+BW/2+20,y:row*LG+BH/2+20}:{x:row*SG+BW/2+20,y:seq*LG+BH/2+20};

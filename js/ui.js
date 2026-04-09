@@ -128,6 +128,7 @@ function switchAppMode(m){
     if(dr) dr.style.display=m==='flow'?'none':'';
     if(tr) tr.style.display=m==='flow'?'':'none';
   });
+  _updateDiagSlidersVisibility();
   render();
 }
 
@@ -621,12 +622,52 @@ function resetToMyTZ(){
   render(); updateList();
 }
 
+// TIMELINE DIRECTION TOGGLE
+function toggleTimelineReverse(){
+  timelineReverse=!timelineReverse;
+  localStorage.setItem('weave-timeline-reverse',timelineReverse?'1':'0');
+  var btn=document.getElementById('tl-reverse-btn');
+  if(btn) btn.classList.toggle('active',timelineReverse);
+  render();
+}
+function applyTimelineReverseState(){
+  var btn=document.getElementById('tl-reverse-btn');
+  if(btn) btn.classList.toggle('active',timelineReverse);
+}
+
+// DIAGRAM SLIDERS
+function onDiagSlider(){
+  var vs=document.getElementById('diag-vslider');
+  var hs=document.getElementById('diag-hslider');
+  if(vs) diagramVSlider=parseInt(vs.value,10)/100;
+  if(hs) diagramHSlider=parseInt(hs.value,10)/100;
+  localStorage.setItem('weave-vslider',String(diagramVSlider));
+  localStorage.setItem('weave-hslider',String(diagramHSlider));
+  render();
+}
+function initDiagSliders(){
+  var vs=document.getElementById('diag-vslider');
+  var hs=document.getElementById('diag-hslider');
+  if(vs) vs.value=String(Math.round(diagramVSlider*100));
+  if(hs) hs.value=String(Math.round(diagramHSlider*100));
+  _updateDiagSlidersVisibility();
+}
+function _updateDiagSlidersVisibility(){
+  var hide=appMode==='table';
+  var vw=document.getElementById('diag-vslider-wrap');
+  var hw=document.getElementById('diag-hslider-wrap');
+  if(vw) vw.classList.toggle('diag-slider-hidden',hide);
+  if(hw) hw.classList.toggle('diag-slider-hidden',hide);
+}
+
 // INIT
 document.addEventListener('DOMContentLoaded',function(){
   applyStoredTheme();
   initTimezone();
   switchAppMode('timeline'); refreshDL(); refreshActorDL(); refreshLevelDL(); updateList(); render();
   initLegend();
+  applyTimelineReverseState();
+  initDiagSliders();
   document.getElementById('dc-level').checked=displayConfig.showLevel;
   document.getElementById('dc-event-code').checked=displayConfig.showEventCode;
   document.getElementById('dc-managed-integration-code').checked=displayConfig.showManagedIntegrationCode;
