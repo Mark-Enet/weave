@@ -269,6 +269,16 @@ html.dark .elevel-debug{background:rgba(136,153,200,.12);color:#99aacc}
 .tdiv{width:1px;height:18px;background:var(--border);margin:0 2px}
 .cvport-wrap{position:relative;flex:1;overflow:hidden;display:flex;flex-direction:column}
 .cvport{flex:1;overflow:auto;padding:20px;background:var(--chart-bg);transition:background .25s}
+/* Floating diagram sliders */
+.diag-vslider-wrap{position:absolute;right:44px;top:50%;transform:translateY(-50%);
+  z-index:150;display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:auto}
+.diag-hslider-wrap{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  z-index:150;display:flex;flex-direction:row;align-items:center;gap:3px;pointer-events:auto}
+.diag-vslider-wrap.diag-slider-hidden,.diag-hslider-wrap.diag-slider-hidden{display:none}
+.diag-vslider{writing-mode:vertical-lr;direction:rtl;height:140px;width:20px;
+  cursor:pointer;accent-color:var(--accent);opacity:.65;transition:opacity .15s}
+.diag-hslider{width:140px;height:20px;cursor:pointer;accent-color:var(--accent);opacity:.65;transition:opacity .15s}
+.diag-vslider:hover,.diag-hslider:hover{opacity:1}
 #diagram-legend{position:absolute;top:12px;right:12px;background:var(--surface);border:1px solid var(--border);
   border-radius:9px;padding:8px 12px;z-index:200;display:flex;flex-direction:column;gap:5px;
   box-shadow:0 2px 12px rgba(0,0,0,.15);transition:background .25s,border-color .25s,opacity .25s}
@@ -280,6 +290,7 @@ html.dark .elevel-debug{background:rgba(136,153,200,.12);color:#99aacc}
 .leg-line-proc{border-style:dashed}
 .leg-label{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--text2);white-space:nowrap}
 #legend-toggle-btn.active{background:var(--surface3);border-color:var(--accent);color:var(--accent)}
+#tl-reverse-btn.active{background:var(--surface3);border-color:var(--accent);color:var(--accent)}
 .sbanner{font-family:'Nunito',sans-serif;font-size:1.1rem;font-weight:800;color:var(--text2);
   text-align:center;padding:0 0 10px;letter-spacing:-.01em}
 .sbanner .ssub{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--text3);
