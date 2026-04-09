@@ -106,10 +106,14 @@ function render(){
     renderTimeline(ca,sorted,document.getElementById('orientation').value);
     applyDiagramZoom(diagramZoom);
     _setupWheelZoom();
+    _setupPan();
+    var _dsvg=_getSvg(); if(_dsvg) _dsvg.setAttribute('cursor','grab');
   }else{
     renderFlow(ca,document.getElementById('flow-dir').value,displayConfig.showSeq,active);
     applyDiagramZoom(diagramZoom);
     _setupWheelZoom();
+    _setupPan();
+    var _dsvg=_getSvg(); if(_dsvg) _dsvg.setAttribute('cursor','grab');
   }
   if(typeof updateLegendColors==='function') updateLegendColors();
 }
@@ -166,6 +170,48 @@ function _setupWheelZoom(){
     vp.scrollLeft=svgInScrollX+natX*newZ-(e.clientX-vpRect.left);
     vp.scrollTop=svgInScrollY+natY*newZ-(e.clientY-vpRect.top);
   },{passive:false});
+}
+
+function _setupPan(){
+  var vp=document.querySelector('.cvport');
+  if(!vp||vp._panBound) return;
+  vp._panBound=true;
+  var panning=false, startX, startY, startScrollX, startScrollY;
+  var panCursorStyle=document.getElementById('_pan-cursor-style');
+  if(!panCursorStyle){
+    panCursorStyle=document.createElement('style');
+    panCursorStyle.id='_pan-cursor-style';
+    document.head.appendChild(panCursorStyle);
+  }
+
+  vp.addEventListener('mousedown',function(e){
+    if(e.button!==0) return;
+    var svg=_getSvg(); if(!svg||appMode==='table') return;
+    // Walk up from target to SVG root; bail out if an event hit area is found
+    var t=e.target;
+    while(t&&t!==svg){
+      if(t.getAttribute&&t.getAttribute('data-event-hit')) return;
+      t=t.parentNode;
+    }
+    if(t!==svg) return; // click was outside the SVG entirely
+    panning=true;
+    startX=e.clientX; startY=e.clientY;
+    startScrollX=vp.scrollLeft; startScrollY=vp.scrollTop;
+    panCursorStyle.textContent='*{cursor:grabbing!important;user-select:none!important}';
+    e.preventDefault();
+  });
+
+  document.addEventListener('mousemove',function(e){
+    if(!panning) return;
+    vp.scrollLeft=startScrollX-(e.clientX-startX);
+    vp.scrollTop=startScrollY-(e.clientY-startY);
+  });
+
+  document.addEventListener('mouseup',function(){
+    if(!panning) return;
+    panning=false;
+    panCursorStyle.textContent='';
+  });
 }
 
 // ── LIST VIEW ───────────────────────────────────────────
