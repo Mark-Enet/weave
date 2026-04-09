@@ -28,8 +28,9 @@ function renderFlow(parent,direction,showSeq,filteredEvents){
   var extraRows=(displayConfig.showEventCode?1:0)+(displayConfig.showManagedIntegrationCode?1:0);
   var BW=170,BH=58+extraRows*13;
   // Apply slider multipliers: vertical slider controls Y dimension, horizontal controls X.
-  // In LR mode: SG is X spacing (events), LG is Y spacing (lanes).
-  // In TB mode: SG is X spacing (lanes), LG is Y spacing (events).
+  // SG is always horizontal spacing (between event columns in LR mode, between system
+  // lane columns in TB mode). LG is always vertical spacing (between system lane rows
+  // in LR mode, between event rows in TB mode).
   var LG=Math.round((isLR?105+extraRows*13:210)*diagramVSlider);
   var SG=Math.round((isLR?215:165+extraRows*13)*diagramHSlider);
   function bC(id){

@@ -183,7 +183,7 @@ function renderTimeline(parent,sorted,orientation){
     sc._totalPx=_tPx;
     if(_bps){
       sc._breakpoints=_bps.slice().reverse().map(function(bp){
-        return {t0:bp.t0,t1:bp.t1,v0:_tPx-bp.v1,v1:_tPx-bp.v0,compressed:bp.compressed,gapMs:bp.gapMs};
+        return {t0:bp.t1,t1:bp.t0,v0:_tPx-bp.v1,v1:_tPx-bp.v0,compressed:bp.compressed,gapMs:bp.gapMs};
       });
     } else {
       sc._breakpoints=null;
@@ -191,11 +191,12 @@ function renderTimeline(parent,sorted,orientation){
   }
 
   // evPos — visual position of event e along the time axis, accounting for stacking.
-  // In reversed mode the stack offset goes in the positive direction (older events
-  // are at larger positions, and simultaneous events spread further in that direction).
+  // Stack offset always adds in the positive (forward) direction so simultaneous
+  // same-system events spread toward larger pixel values (toward the older-time
+  // side), preventing overlap with events at newer timestamps regardless of whether
+  // the timeline is reversed or not.
   function evPos(e){
-    var base=sc(e.timestamp), idx=eventStack[e._id]||0;
-    return timelineReverse ? base-idx*EH : base+idx*EH;
+    return sc(e.timestamp)+(eventStack[e._id]||0)*EH;
   }
   var W=plotW+mg.left+mg.right, H=plotH+mg.top+mg.bottom;
   function lp(i){return i*LANE+LANE/2;}
