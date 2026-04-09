@@ -343,6 +343,14 @@ function dsRunQuery() {
   var eventCodeField    = document.getElementById('ds-event-code-field').value.trim();
   var levelField        = document.getElementById('ds-level-field').value.trim();
   var integCodeField    = document.getElementById('ds-integration-code-field').value.trim();
+  var intCfg = {
+    field:       document.getElementById('ds-interactions-field').value.trim(),
+    targetField: document.getElementById('ds-int-target-field').value.trim(),
+    natureField: document.getElementById('ds-int-nature-field').value.trim(),
+    labelField:  document.getElementById('ds-int-label-field').value.trim(),
+    delayField:  document.getElementById('ds-int-delay-field').value.trim(),
+    orderField:  document.getElementById('ds-int-order-field').value.trim()
+  };
 
   if (!endpoint) { toast('Endpoint path is required', '!'); return; }
 
@@ -375,7 +383,7 @@ function dsRunQuery() {
         ? data
         : (data.result || data.data || data.records || data.items || []);
       statusEl.textContent = records.length + ' record(s) returned';
-      dsShowResults(records, descField, sysField, actorField, tsField, eventCodeField, levelField, integCodeField);
+      dsShowResults(records, descField, sysField, actorField, tsField, eventCodeField, levelField, integCodeField, intCfg);
     })
     .catch(function(e) {
       statusEl.textContent = 'Error: ' + e.message;
@@ -409,7 +417,7 @@ function dsRandomSuffix() {
   return Array.from(arr).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
 }
 
-function dsShowResults(records, descField, sysField, actorField, tsField, eventCodeField, levelField, integCodeField) {
+function dsShowResults(records, descField, sysField, actorField, tsField, eventCodeField, levelField, integCodeField, intCfg) {
   var el = document.getElementById('ds-results');
   el._records          = records;
   el._descField        = descField;
@@ -419,6 +427,7 @@ function dsShowResults(records, descField, sysField, actorField, tsField, eventC
   el._eventCodeField   = eventCodeField  || '';
   el._levelField       = levelField      || '';
   el._integCodeField   = integCodeField  || '';
+  el._intCfg           = intCfg          || {};
 
   if (!records.length) {
     el.innerHTML = '<div class="hint" style="padding:8px 0">No records found.</div>';
@@ -449,7 +458,7 @@ function dsImportRecord(idx) {
   var el  = document.getElementById('ds-results');
   var rec = (el._records || [])[idx];
   if (!rec) return;
-  dsRecordToEvent(rec, el._descField, el._sysField, el._actorField, el._tsField, el._eventCodeField, el._levelField, el._integCodeField);
+  dsRecordToEvent(rec, el._descField, el._sysField, el._actorField, el._tsField, el._eventCodeField, el._levelField, el._integCodeField, el._intCfg);
   var item = document.getElementById('dsri-' + idx);
   var btn  = document.getElementById('ds-add-' + idx);
   if (item) item.classList.add('ds-imported');
@@ -461,7 +470,7 @@ function dsImportAll() {
   var records = el._records || [];
   if (!records.length) return;
   records.forEach(function(rec, i) {
-    dsRecordToEvent(rec, el._descField, el._sysField, el._actorField, el._tsField, el._eventCodeField, el._levelField, el._integCodeField);
+    dsRecordToEvent(rec, el._descField, el._sysField, el._actorField, el._tsField, el._eventCodeField, el._levelField, el._integCodeField, el._intCfg);
     var item = document.getElementById('dsri-' + i);
     var btn  = document.getElementById('ds-add-' + i);
     if (item) item.classList.add('ds-imported');
@@ -471,7 +480,7 @@ function dsImportAll() {
   toast(records.length + ' record(s) imported', '\u2191');
 }
 
-function dsRecordToEvent(rec, descField, sysField, actorField, tsField, eventCodeField, levelField, integCodeField) {
+function dsRecordToEvent(rec, descField, sysField, actorField, tsField, eventCodeField, levelField, integCodeField, intCfg) {
   var desc      = dsGetRecordDesc(rec, descField);
   var sys       = sysField        ? dsGetFieldVal(rec, sysField)        : '';
   var actor     = actorField      ? dsGetFieldVal(rec, actorField)      : '';
@@ -493,6 +502,33 @@ function dsRecordToEvent(rec, descField, sysField, actorField, tsField, eventCod
     }
   }
   var tsStr = tsMs ? new Date(tsMs).toISOString() : null;
+  var interactions = [];
+  var cfg = intCfg || {};
+  if (cfg.field) {
+    var rawInts = rec[cfg.field];
+    if (Array.isArray(rawInts)) {
+      var validNatures = ['push', 'pull', 'process'];
+      rawInts.forEach(function(intRec, idx) {
+        var target = cfg.targetField ? dsGetFieldVal(intRec, cfg.targetField) : '';
+        var nature = cfg.natureField ? dsGetFieldVal(intRec, cfg.natureField) : '';
+        var label  = cfg.labelField  ? dsGetFieldVal(intRec, cfg.labelField)  : '';
+        var delay  = cfg.delayField  ? dsGetFieldVal(intRec, cfg.delayField)  : '';
+        var order  = cfg.orderField  ? dsGetFieldVal(intRec, cfg.orderField)  : '';
+        if (!target) return;
+        // Default to 'push' when nature is missing or unrecognised
+        var normNature = validNatures.indexOf(nature) !== -1 ? nature : 'push';
+        var orderNum   = order !== '' ? (parseInt(order, 10) || idx) : idx;
+        interactions.push({
+          target: target || '',
+          nature: normNature,
+          label:  label  || '',
+          delay:  delay  || '',
+          order:  orderNum
+        });
+        if (target) knownSys.add(target);
+      });
+    }
+  }
   var ev = {
     _id:                      'ds-' + Date.now() + '-' + dsRandomSuffix(),
     desc:                     desc,
@@ -503,7 +539,7 @@ function dsRecordToEvent(rec, descField, sysField, actorField, tsField, eventCod
     eventCode:                eventCode || '',
     level:                    normalizeLevel(level),
     managedIntegrationCode:   integCode || '',
-    interactions:             [],
+    interactions:             interactions,
     mode:                     appMode
   };
   events.push(ev);
@@ -512,6 +548,10 @@ function dsRecordToEvent(rec, descField, sysField, actorField, tsField, eventCod
     if (!systemsRegistry.find(function(s){return s.name===ev.system;}))
       systemsRegistry.push({name: ev.system, desc: '', order: undefined});
   }
+  interactions.forEach(function(i) {
+    if (i.target && !systemsRegistry.find(function(s){return s.name===i.target;}))
+      systemsRegistry.push({name: i.target, desc: '', order: undefined});
+  });
   if (ev.actor && !actorsRegistry.find(function(a){return a.name===ev.actor;}))
     actorsRegistry.push({name: ev.actor, desc: ''});
   refreshDL();
@@ -592,28 +632,40 @@ function dsImportConfigFile(e) {
 // ── QUERY IMPORT / EXPORT ──────────────────────────────────────────────────
 function dsReadQueryForm() {
   return {
-    endpoint:       (document.getElementById('ds-endpoint').value             || '').trim(),
-    queryParams:    (document.getElementById('ds-query').value                || '').trim(),
-    descField:      (document.getElementById('ds-desc-field').value           || '').trim(),
-    sysField:       (document.getElementById('ds-sys-field').value            || '').trim(),
-    actorField:     (document.getElementById('ds-actor-field').value          || '').trim(),
-    tsField:        (document.getElementById('ds-ts-field').value             || '').trim(),
-    eventCodeField: (document.getElementById('ds-event-code-field').value     || '').trim(),
-    levelField:     (document.getElementById('ds-level-field').value          || '').trim(),
-    integCodeField: (document.getElementById('ds-integration-code-field').value || '').trim()
+    endpoint:           (document.getElementById('ds-endpoint').value                 || '').trim(),
+    queryParams:        (document.getElementById('ds-query').value                    || '').trim(),
+    descField:          (document.getElementById('ds-desc-field').value               || '').trim(),
+    sysField:           (document.getElementById('ds-sys-field').value                || '').trim(),
+    actorField:         (document.getElementById('ds-actor-field').value              || '').trim(),
+    tsField:            (document.getElementById('ds-ts-field').value                 || '').trim(),
+    eventCodeField:     (document.getElementById('ds-event-code-field').value         || '').trim(),
+    levelField:         (document.getElementById('ds-level-field').value              || '').trim(),
+    integCodeField:     (document.getElementById('ds-integration-code-field').value   || '').trim(),
+    interactionsField:  (document.getElementById('ds-interactions-field').value       || '').trim(),
+    intTargetField:     (document.getElementById('ds-int-target-field').value         || '').trim(),
+    intNatureField:     (document.getElementById('ds-int-nature-field').value         || '').trim(),
+    intLabelField:      (document.getElementById('ds-int-label-field').value          || '').trim(),
+    intDelayField:      (document.getElementById('ds-int-delay-field').value          || '').trim(),
+    intOrderField:      (document.getElementById('ds-int-order-field').value          || '').trim()
   };
 }
 
 function dsPopulateQueryForm(q) {
-  document.getElementById('ds-endpoint').value                    = q.endpoint       || '';
-  document.getElementById('ds-query').value                       = q.queryParams    || '';
-  document.getElementById('ds-desc-field').value                  = q.descField      || '';
-  document.getElementById('ds-sys-field').value                   = q.sysField       || '';
-  document.getElementById('ds-actor-field').value                 = q.actorField     || '';
-  document.getElementById('ds-ts-field').value                    = q.tsField        || '';
-  document.getElementById('ds-event-code-field').value            = q.eventCodeField || '';
-  document.getElementById('ds-level-field').value                 = q.levelField     || '';
-  document.getElementById('ds-integration-code-field').value      = q.integCodeField || '';
+  document.getElementById('ds-endpoint').value                    = q.endpoint           || '';
+  document.getElementById('ds-query').value                       = q.queryParams        || '';
+  document.getElementById('ds-desc-field').value                  = q.descField          || '';
+  document.getElementById('ds-sys-field').value                   = q.sysField           || '';
+  document.getElementById('ds-actor-field').value                 = q.actorField         || '';
+  document.getElementById('ds-ts-field').value                    = q.tsField            || '';
+  document.getElementById('ds-event-code-field').value            = q.eventCodeField     || '';
+  document.getElementById('ds-level-field').value                 = q.levelField         || '';
+  document.getElementById('ds-integration-code-field').value      = q.integCodeField     || '';
+  document.getElementById('ds-interactions-field').value          = q.interactionsField  || '';
+  document.getElementById('ds-int-target-field').value            = q.intTargetField     || '';
+  document.getElementById('ds-int-nature-field').value            = q.intNatureField     || '';
+  document.getElementById('ds-int-label-field').value             = q.intLabelField      || '';
+  document.getElementById('ds-int-delay-field').value             = q.intDelayField      || '';
+  document.getElementById('ds-int-order-field').value             = q.intOrderField      || '';
 }
 
 function dsSaveQueryLocal() {
@@ -626,7 +678,8 @@ function dsLoadQueryLocal() {
 
 function dsIsQueryEmpty(q) {
   return !q.endpoint && !q.queryParams && !q.descField && !q.sysField && !q.actorField &&
-         !q.tsField && !q.eventCodeField && !q.levelField && !q.integCodeField;
+         !q.tsField && !q.eventCodeField && !q.levelField && !q.integCodeField &&
+         !q.interactionsField;
 }
 
 function dsExportQuery() {
@@ -642,7 +695,15 @@ function dsExportQuery() {
     timestamp:       q.tsField,
     eventCode:       q.eventCodeField,
     level:           q.levelField,
-    integrationCode: q.integCodeField
+    integrationCode: q.integCodeField,
+    interactions: {
+      field:       q.interactionsField,
+      targetField: q.intTargetField,
+      natureField: q.intNatureField,
+      labelField:  q.intLabelField,
+      delayField:  q.intDelayField,
+      orderField:  q.intOrderField
+    }
   };
   var exportObj = { weaveDsQuery: true, endpoint: q.endpoint, queryParams: q.queryParams, fieldMap: fieldMap };
   var blob = new Blob([JSON.stringify(exportObj, null, 2)], {type: 'application/json'});
@@ -671,16 +732,23 @@ function dsImportQueryFile(e) {
         return;
       }
       var fm = data.fieldMap || {};
+      var intFm = fm.interactions || {};
       dsPopulateQueryForm({
-        endpoint:       data.endpoint    || '',
-        queryParams:    data.queryParams || '',
-        descField:      fm.desc          || '',
-        sysField:       fm.system        || '',
-        actorField:     fm.actor         || '',
-        tsField:        fm.timestamp     || '',
-        eventCodeField: fm.eventCode     || '',
-        levelField:     fm.level         || '',
-        integCodeField: fm.integrationCode || ''
+        endpoint:          data.endpoint    || '',
+        queryParams:       data.queryParams || '',
+        descField:         fm.desc          || '',
+        sysField:          fm.system        || '',
+        actorField:        fm.actor         || '',
+        tsField:           fm.timestamp     || '',
+        eventCodeField:    fm.eventCode     || '',
+        levelField:        fm.level         || '',
+        integCodeField:    fm.integrationCode || '',
+        interactionsField: intFm.field       || '',
+        intTargetField:    intFm.targetField  || '',
+        intNatureField:    intFm.natureField  || '',
+        intLabelField:     intFm.labelField   || '',
+        intDelayField:     intFm.delayField   || '',
+        intOrderField:     intFm.orderField   || ''
       });
       dsSaveQueryLocal();
       toast('Query imported', '\u2191');
